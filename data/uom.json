@@ -52,10 +52,6 @@
 		"description": "Square Centimeters"
 	},
 	{
-		"unitOfMeasurement": "2M2",
-		"description": "Square Feet"
-	},
-	{
 		"unitOfMeasurement": "3M2",
 		"description": "Square Inches"
 	},

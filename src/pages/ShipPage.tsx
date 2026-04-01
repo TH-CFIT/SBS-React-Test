@@ -8,9 +8,11 @@ import {
 } from 'lucide-react';
 
 import countriesData from '../../data/countries.json';
+import incotermsData from '../../data/incoterms.json';
 import appConfig from '../../data/appConfig.json';
 import currenciesData from '../../data/currencies.json';
 import documentTypes from '../../data/documentTypes.json';
+import uomData from '../../data/uom.json';
 import { buildShipmentPayload } from '../utils/createShipment';
 
 
@@ -32,7 +34,7 @@ const transformCountryData = (apiResponse: any) => {
 
 // --- Sub Components ---
 // --- Sub Components ---
-const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyCountry = false, showError = false, requiredEmail = true }: { title: string, data: any, onChange: (d: any) => void, countries: any[], bgClass?: string, readOnlyCountry?: boolean, showError?: boolean, requiredEmail?: boolean }) => {
+const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyCountry = false, showError = false, requiredEmail = true, showCountryPlaceholder = true }: { title: string, data: any, onChange: (d: any) => void, countries: any[], bgClass?: string, readOnlyCountry?: boolean, showError?: boolean, requiredEmail?: boolean, showCountryPlaceholder?: boolean }) => {
   const { t } = useLanguage();
 
   // Logic to manage receiver address fields (City vs Postal Code vs Suburb)
@@ -69,8 +71,8 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
             onChange={e => onChange({ ...data, country: e.target.value })}
             disabled={readOnlyCountry}
           >
-            <option value="" disabled>{t('typeOrSelectCountry' as any)}</option>
-            {countries.map((c: any) => <option key={c.countryCode} value={c.countryCode}>{c.countryName}</option>)}
+            {showCountryPlaceholder && <option value="" disabled>{t('typeOrSelectCountry' as any)}</option>}
+            {countries.map((c: any, index: number) => <option key={`${c.countryCode}-${index}`} value={c.countryCode}>{c.countryName || c.name}</option>)}
           </select>
           {!data.country && (
             <span className="absolute right-10 top-1/2 -translate-y-1/2 text-dhl-red font-black text-xl animate-pulse pointer-events-none">*</span>
@@ -121,7 +123,7 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
   );
 };
 
-const Input = ({ label, value, onChange, type = 'text', required, disabled, readOnly, ruleKey, showError, min, placeholder }: { label: string, value: any, onChange?: (v: any) => void, type?: string, required?: boolean, disabled?: boolean, readOnly?: boolean, ruleKey?: string, showError?: boolean, min?: string, placeholder?: string }) => {
+const Input = ({ label, value, onChange, type = 'text', required, disabled, readOnly, ruleKey, showError, min, max, placeholder, inputMode, pattern }: { label: string, value: any, onChange?: (v: any) => void, type?: string, required?: boolean, disabled?: boolean, readOnly?: boolean, ruleKey?: string, showError?: boolean, min?: string, max?: string, placeholder?: string, inputMode?: "none" | "text" | "tel" | "url" | "email" | "numeric" | "decimal" | "search", pattern?: string }) => {
   const { t } = useLanguage();
   const rule = ruleKey ? (appConfig.validationRules as any)[ruleKey] : null;
   const maxLength = rule?.maxLength;
@@ -149,6 +151,8 @@ const Input = ({ label, value, onChange, type = 'text', required, disabled, read
 
     if (isPhone) {
       sanitized = sanitized.replace(/[^0-9]/g, '');
+    } else if (ruleKey === 'accountNumber') {
+      sanitized = sanitized.replace(/[^0-9]/g, '');
     } else {
       sanitized = sanitized.replace(/[^\x20-\x7E]/g, '');
     }
@@ -168,7 +172,10 @@ const Input = ({ label, value, onChange, type = 'text', required, disabled, read
           readOnly={readOnly}
           maxLength={maxLength}
           min={min}
+          max={max}
           placeholder={placeholder}
+          inputMode={inputMode}
+          pattern={pattern}
           className={`w-full p-4 pr-12 rounded-xl border-2 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-dhl-yellow outline-none font-bold transition-all ${disabled ? 'opacity-50 cursor-not-allowed bg-gray-50' : 'hover:border-gray-200'} ${readOnly ? 'bg-gray-50 dark:bg-gray-900 border-none' : ''} ${isHardError ? 'border-dhl-red ring-4 ring-red-500/10' : 'border-gray-50 dark:border-gray-700'}`}
         />
         {required && !value && (
@@ -247,6 +254,18 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
   const [showValidationErrors, setShowValidationErrors] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Record<number, boolean>>({ 0: true });
 
+  // Validation rules from appConfig
+  const packageQuantityMin = appConfig.validationRules.package.quantity.min;
+  const packageQuantityMax = appConfig.validationRules.package.quantity.max;
+  const packageWeightMin = appConfig.validationRules.package.weight.min;
+  const packageWeightMax = appConfig.validationRules.package.weight.max;
+  const packageDimensionsMin = appConfig.validationRules.package.dimensions.min;
+  const packageDimensionsMax = appConfig.validationRules.package.dimensions.max;
+
+  const lineItemQuantityMin = appConfig.validationRules.lineItem.quantity.min;
+  const lineItemWeightMin = appConfig.validationRules.lineItem.weight.min;
+  const lineItemValueMin = appConfig.validationRules.lineItem.value.min;
+
   // Form State
   const [formData, setFormData] = useState({
     // Step 1: Addresses
@@ -260,18 +279,19 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
     shipmentReference: '',
     summarizeShipment: '',
     insurance: { required: false, value: '' },
+    lineItems: [{ description: '', quantity: 1, weight: 0.5, value: 1, origin: 'TH', units: 'PCS', commodityCode: '' }],
 
     // Step 3: Packaging
-    packages: [{ description: 'Box', quantity: 1, weight: 0.5, width: 10, height: 10, depth: 10 }],
+    packages: [{ quantity: 1, weight: 0.5, width: 10, height: 10, depth: 10 }],
 
     // Step 4: Payment
     payment: {
-      shipperAccount: '600000000',
-      billingAccount: '600000000',
-      dutiesAccount: '600000000',
+      shipperAccount: '',
+      billingAccount: '',
+      dutiesAccount: '',
       incoterm: 'DAP',
       paymentRole: 'shipper',
-      dutiesRole: 'receiver'
+      dutiesRole: 'shipper'
     },
 
     // Step 5: Customs Docs (Invoice items & docs)
@@ -307,14 +327,17 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
         const finalized = transformed.map((c: any) => {
           if (c.countryCode === 'VN') return { ...c, postalLocationTypeCode: 'S' };
           return c;
-        });
+        }).filter((c: any, index: number, arr: any[]) => arr.findIndex((c2: any) => c2.countryCode === c.countryCode) === index);
 
         setCountries(finalized);
+        setFormData(prev => ({ ...prev, receiver: { ...prev.receiver, country: finalized[0]?.countryCode || '' } }));
         setLoading(false);
       } catch (error) {
         console.error("Error fetching live country data, falling back to local:", error);
         if (countriesData && countriesData.length > 0) {
-          setCountries(countriesData);
+          const uniqueCountries = countriesData.filter((c: any, index: number, arr: any[]) => arr.findIndex((c2: any) => c2.code === c.code) === index);
+          setCountries(uniqueCountries);
+          setFormData(prev => ({ ...prev, receiver: { ...prev.receiver, country: uniqueCountries[0]?.code || '' } }));
         }
         setLoading(false);
       }
@@ -337,12 +360,42 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
     if (currentStep === 1) {
       // Basic validation for Step 1 mandatory fields
       const { shipper, receiver } = formData;
-      const isShipperValid = shipper.name && shipper.company && shipper.address1 && shipper.city && shipper.phone && shipper.email;
-      const isReceiverValid = receiver.name && receiver.company && receiver.country && receiver.address1 && receiver.city && receiver.phone;
+      
+      // Email format validation function
+      const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      
+      // Shipper validation: email is required and must be valid format
+      const isShipperValid = shipper.name && shipper.company && shipper.address1 && shipper.city && shipper.phone && shipper.email && isValidEmail(shipper.email);
+      
+      // Receiver validation: email is optional but if provided must be valid format
+      const isReceiverValid = receiver.name && receiver.company && receiver.country && receiver.address1 && receiver.city && receiver.phone && (!receiver.email || isValidEmail(receiver.email));
 
       if (!isShipperValid || !isReceiverValid) {
         setShowValidationErrors(true);
         // Optional: toast or scroll to first error
+        return;
+      }
+    }
+
+    if (currentStep === 2) {
+      // Validation for Step 2 mandatory fields
+      if (formData.shipMethod === 'document') {
+        if (!formData.shipDate || !formData.documentDescription.trim()) {
+          setShowValidationErrors(true);
+          return;
+        }
+      } else {
+        // Block package shipments
+        setShowValidationErrors(true);
+        return;
+      }
+    }
+
+    if (currentStep === 4) {
+      // Validation for Step 4 mandatory fields
+      const { payment } = formData;
+      if (!payment.shipperAccount || !payment.billingAccount || (payment.dutiesRole !== 'receiver' && !payment.dutiesAccount) || !payment.incoterm) {
+        setShowValidationErrors(true);
         return;
       }
     }
@@ -400,9 +453,10 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
 
   // Step 3 Package Logic
   const addPackage = () => {
+    const newIndex = formData.packages.length;
     setFormData(prev => ({
       ...prev,
-      packages: [...prev.packages, { description: 'Box', quantity: 1, weight: 0.5, width: 10, height: 10, depth: 10 }]
+      packages: [...prev.packages, { quantity: 1, weight: 0.5, width: 10, height: 10, depth: 10 }]
     }));
   };
 
@@ -514,6 +568,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
               bgClass="bg-yellow-50/30"
               showError={showValidationErrors}
               requiredEmail={false}
+              showCountryPlaceholder={false}
             />
           </div>
         )}
@@ -554,21 +609,8 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
 
             {formData.shipMethod === 'document' && (
               <div className="space-y-6 pt-6 border-t border-gray-100 animate-in slide-in-from-bottom-4 duration-500">
-                <div className="space-y-1.5 flex-grow">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('describeDocuments' as any)}</label>
-                  <div className="relative">
-                    <select
-                      className="w-full p-4 rounded-xl border-2 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-dhl-yellow outline-none font-bold hover:border-gray-200 transition-all border-gray-50 dark:border-gray-700"
-                      value={formData.documentDescription}
-                      onChange={e => setFormData(p => ({ ...p, documentDescription: e.target.value }))}
-                    >
-                      {documentTypes.map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <Input label={t('shipmentRef' as any)} value={formData.shipmentReference} onChange={v => setFormData(p => ({ ...p, shipmentReference: v }))} showError={showValidationErrors} />
+                <Input label={t('describeDocuments' as any)} value={formData.documentDescription} onChange={v => setFormData(p => ({ ...p, documentDescription: v }))} required ruleKey="summarizeShipment" showError={showValidationErrors} />
+                <Input label={t('shipmentRef' as any)} value={formData.shipmentReference} onChange={v => setFormData(p => ({ ...p, shipmentReference: v }))} ruleKey="shipmentRef" showError={showValidationErrors} />
               </div>
             )}
 
@@ -610,7 +652,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                           {/* Item Details - collapsible */}
                           {isExpanded && (
                             <div className="px-4 pb-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
-                              <Input label={t('whatIsTheItem' as any)} value={item.description} onChange={v => { setItemDescError(false); const n = [...formData.invoice.items]; n[i].description = v; setFormData(p => ({ ...p, invoice: { ...p.invoice, items: n } })) }} required showError={showDescError || showValidationErrors} />
+                              <Input label={t('whatIsTheItem' as any)} value={item.description} onChange={v => { setItemDescError(false); const n = [...formData.invoice.items]; n[i].description = v; setFormData(p => ({ ...p, invoice: { ...p.invoice, items: n } })) }} required ruleKey="itemDescription" showError={showDescError || showValidationErrors} />
                               <Input
                                 label="Commodity Code"
                                 value={item.commodityCode || ''}
@@ -626,42 +668,24 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                                 }}
                                 ruleKey="commodityCode"
                               />                              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                <Input label={t('quantity' as any)} type="number" value={item.quantity} onChange={v => { const n = [...formData.invoice.items]; n[i].quantity = parseInt(v) || 0; setFormData(p => ({ ...p, invoice: { ...p.invoice, items: n } })) }} required />
+                                <Input label={t('quantity' as any)} type="number" value={item.quantity} onChange={v => { const n = [...formData.invoice.items]; n[i].quantity = parseInt(v) || 0; setFormData(p => ({ ...p, invoice: { ...p.invoice, items: n } })) }} required min={lineItemQuantityMin.toString()} />
                                 <div className="space-y-1.5 flex-grow">
                                   <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Units</label>
                                   <select className="w-full p-4 rounded-xl border-2 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-dhl-yellow outline-none font-bold hover:border-gray-200 transition-all border-gray-50 dark:border-gray-700" value={item.units || 'PCS'} onChange={e => { const n = [...formData.invoice.items]; n[i].units = e.target.value; setFormData(p => ({ ...p, invoice: { ...p.invoice, items: n } })) }}>
-                                    <option value="PCS">PCS</option>
-                                    <option value="BOX">BOX</option>
-                                    <option value="2GM">Centigram</option>
-                                    <option value="CM">Centimeters</option>
-                                    <option value="3M3">Cubic Centimeters</option>
-                                    <option value="M3">Cubic Feet</option>
-                                    <option value="DZ">Dozen</option>
-                                    <option value="GM">Grams</option>
-                                    <option value="GRS">Gross</option>
-                                    <option value="KG">Kilograms</option>
-                                    <option value="L">Liters</option>
-                                    <option value="M">Meters</option>
-                                    <option value="3KG">Milligrams</option>
-                                    <option value="3L">Milliliters</option>
-                                    <option value="X">No Unit</option>
-                                    <option value="NO">Number</option>
-                                    <option value="2KG">Ounces</option>
-                                    <option value="PRS">Pairs</option>
-                                    <option value="2M">Square Centimeters</option>
-                                    <option value="M2">Square Feet</option>
-                                    <option value="2M3">Square Meters</option>
-                                    <option value="3M">Square Yards</option>
-                                    <option value="M4">Yards</option>
+                                    {uomData.map((uom: any) => (
+                                      <option key={uom.unitOfMeasurement || uom.code} value={uom.unitOfMeasurement || uom.code}>
+                                        {uom.description || uom.name}
+                                      </option>
+                                    ))}
                                   </select>
                                 </div>
-                                <Input label={t('weight' as any)} type="number" value={item.weight} onChange={v => { const n = [...formData.invoice.items]; n[i].weight = parseFloat(v) || 0; setFormData(p => ({ ...p, invoice: { ...p.invoice, items: n } })) }} required />
+                                <Input label={t('weight' as any)} type="number" value={item.weight} onChange={v => { const n = [...formData.invoice.items]; n[i].weight = parseFloat(v) || 0; setFormData(p => ({ ...p, invoice: { ...p.invoice, items: n } })) }} required min={lineItemWeightMin.toString()} />
                               </div>
                               <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5 flex-grow">
                                   <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Value (Per Item)</label>
                                   <div className="flex">
-                                    <input type="number" value={item.value} onChange={e => { const n = [...formData.invoice.items]; n[i].value = parseFloat(e.target.value) || 0; setFormData(p => ({ ...p, invoice: { ...p.invoice, items: n } })) }} className="w-full p-4 rounded-l-xl border-2 border-r-0 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-dhl-yellow outline-none font-bold hover:border-gray-200 transition-all border-gray-50 dark:border-gray-700" />
+                                    <input type="number" min={lineItemValueMin.toString()} value={item.value} onChange={e => { const n = [...formData.invoice.items]; n[i].value = parseFloat(e.target.value) || 0; setFormData(p => ({ ...p, invoice: { ...p.invoice, items: n } })) }} className="w-full p-4 rounded-l-xl border-2 border-r-0 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-dhl-yellow outline-none font-bold hover:border-gray-200 transition-all border-gray-50 dark:border-gray-700" />
                                     <select value={formData.invoice.currency} onChange={e => { setFormData(p => ({ ...p, invoice: { ...p.invoice, currency: e.target.value } })) }} className="p-4 rounded-r-xl border-2 bg-gray-100 dark:bg-gray-700 focus:ring-2 focus:ring-dhl-yellow outline-none font-bold transition-all border-gray-50 dark:border-gray-600 min-w-[90px]">
                                       {(currenciesData as string[]).map(c => (<option key={c} value={c}>{c}</option>))}
                                     </select>
@@ -670,7 +694,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                                 <div className="space-y-1.5 flex-grow">
                                   <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('whereWasItMade' as any)}</label>
                                   <select className="w-full p-4 rounded-xl border-2 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-dhl-yellow outline-none font-bold hover:border-gray-200 transition-all border-gray-50 dark:border-gray-700" value={item.origin} onChange={e => { const n = [...formData.invoice.items]; n[i].origin = e.target.value; setFormData(p => ({ ...p, invoice: { ...p.invoice, items: n } })) }}>
-                                    {countries.map(c => (<option key={c.countryCode} value={c.countryCode}>{c.countryCode}</option>))}
+                                    {countries.map(c => (<option key={c.countryCode} value={c.countryCode}>{c.countryName || c.name}</option>))}
                                   </select>
                                 </div>
                               </div>
@@ -695,18 +719,9 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                 {/* Summarize Shipment & Shipment Ref */}
                 <div className="space-y-4">
                   {formData.invoice.items.length > 1 && (
-                    <div className="space-y-1.5 flex-grow">
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('summarizeShipment' as any)}</label>
-                      <p className="text-[10px] text-gray-400 ml-1 -mt-1">{t('shipmentDescription' as any)}</p>
-                      <div className="relative">
-                        <input type="text" value={formData.summarizeShipment} onChange={e => setFormData(p => ({ ...p, summarizeShipment: e.target.value }))} className={`w-full p-4 pr-12 rounded-xl border-2 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-dhl-yellow outline-none font-bold transition-all hover:border-gray-200 ${showValidationErrors && !formData.summarizeShipment ? 'border-dhl-red ring-4 ring-red-500/10' : 'border-gray-50 dark:border-gray-700'}`} />
-                        {!formData.summarizeShipment && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-dhl-red font-black text-xl animate-pulse pointer-events-none">*</span>}
-                        {!!formData.summarizeShipment && <Check className="absolute right-4 top-1/2 -translate-y-1/2 text-green-500 w-5 h-5 animate-in zoom-in pointer-events-none" strokeWidth={3} />}
-                      </div>
-                      {showValidationErrors && !formData.summarizeShipment && <p className="text-[10px] font-bold text-dhl-red ml-1">This field is required</p>}
-                    </div>
+                    <Input label={t('summarizeShipment' as any)} value={formData.summarizeShipment} onChange={v => setFormData(p => ({ ...p, summarizeShipment: v }))} required ruleKey="summarizeShipment" showError={showValidationErrors} />
                   )}
-                  <Input label={t('shipmentRef' as any)} value={formData.shipmentReference} onChange={v => setFormData(p => ({ ...p, shipmentReference: v }))} showError={showValidationErrors} />
+                  <Input label={t('shipmentRef' as any)} value={formData.shipmentReference} onChange={v => setFormData(p => ({ ...p, shipmentReference: v }))} ruleKey="shipmentRef" showError={showValidationErrors} />
                 </div>
 
                 {/* Customs Invoice Details */}
@@ -725,7 +740,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                   )}
 
                   <div className="pt-2">
-                    <Input label={t('invoiceNumber' as any)} value={formData.invoice.number} onChange={v => updateSection('invoice', { number: v })} required showError={showValidationErrors} />
+                    <Input label={t('invoiceNumber' as any)} value={formData.invoice.number} onChange={v => updateSection('invoice', { number: v })} required ruleKey="invoiceNumber" showError={showValidationErrors} />
                   </div>
                 </div>
 
@@ -762,65 +777,66 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
         {currentStep === 3 && (
           <div className="space-y-6 animate-in slide-in-from-right duration-300">
             <div className="card space-y-6">
-              <div className="flex justify-between items-center border-b border-gray-100 pb-4">
-                <div className="flex items-center gap-3 text-dhl-red">
-                  <Package className="w-6 h-6" />
-                  <h3 className="text-xl font-bold uppercase tracking-tight">{t('packageStep')}</h3>
-                </div>
-                <button onClick={addPackage} className="btn-secondary flex items-center gap-2 py-2 px-4 text-xs">
-                  <Plus className="w-4 h-4" />
-                  {language === 'th' ? 'เพิ่มพัสดุ' : 'Add Package'}
-                </button>
+              <div className="flex items-center gap-3 text-dhl-red border-b border-gray-100 pb-4">
+                <Package className="w-6 h-6" />
+                <h3 className="text-xl font-bold uppercase tracking-tight">{t('packageStep')}</h3>
               </div>
 
               <div className="space-y-4">
-                {formData.packages.map((pkg, i) => (
-                  <div key={i} className="group relative p-6 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-transparent hover:border-dhl-yellow transition-all">
-                    <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-                      <div className="md:col-span-2">
-                        <Input label="Description" value={pkg.description} onChange={v => {
-                          const newPkgs = [...formData.packages];
-                          newPkgs[i].description = v;
-                          setFormData(p => ({ ...p, packages: newPkgs }));
-                        }} />
+                {formData.packages.map((pkg, index) => {
+                  return (
+                    <div key={index} className="bg-gray-50 dark:bg-gray-900 border dark:border-gray-800 rounded-xl relative group transition-all hover:border-gray-200 overflow-hidden">
+                      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700">
+                        <span className="text-lg font-bold text-gray-900 dark:text-white">Package #{index + 1}</span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => removePackage(index)}
+                            className="text-red-500 hover:text-red-700 p-2"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        </div>
                       </div>
-                      <Input label="Qty" type="number" value={pkg.quantity} onChange={v => {
-                        const newPkgs = [...formData.packages];
-                        newPkgs[i].quantity = parseInt(v) || 0;
-                        setFormData(p => ({ ...p, packages: newPkgs }));
-                      }} />
-                      <Input label="Weight (KG)" type="number" value={pkg.weight} onChange={v => {
-                        const newPkgs = [...formData.packages];
-                        newPkgs[i].weight = parseFloat(v) || 0;
-                        setFormData(p => ({ ...p, packages: newPkgs }));
-                      }} />
-                      <div className="md:col-span-1 flex gap-2">
-                        <Input label="Vol (W/H/D)" value={`${pkg.width}x${pkg.height}x${pkg.depth}`} readOnly />
-                      </div>
-                      <div className="flex items-end justify-end">
-                        <button onClick={() => removePackage(i)} className="p-3 text-gray-400 hover:text-dhl-red hover:bg-red-50 rounded-xl transition-all">
-                          <Trash2 className="w-5 h-5" />
-                        </button>
+                      <div className="p-4 space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                          <Input label="Qty" type="number" value={pkg.quantity} onChange={v => {
+                            const newPkgs = [...formData.packages];
+                            newPkgs[index].quantity = parseInt(v) || 0;
+                            setFormData(p => ({ ...p, packages: newPkgs }));
+                          }} min={packageQuantityMin.toString()} max={packageQuantityMax.toString()} />
+                          <Input label="Weight (KG)" type="number" value={pkg.weight} onChange={v => {
+                            const newPkgs = [...formData.packages];
+                            newPkgs[index].weight = parseFloat(v) || 0;
+                            setFormData(p => ({ ...p, packages: newPkgs }));
+                          }} min={packageWeightMin.toString()} max={packageWeightMax.toString()} />
+                          <Input label="Width (CM)" type="number" value={pkg.width} onChange={v => {
+                            const newPkgs = [...formData.packages];
+                            newPkgs[index].width = parseFloat(v) || 0;
+                            setFormData(p => ({ ...p, packages: newPkgs }));
+                          }} min={packageDimensionsMin.toString()} max={packageDimensionsMax.toString()} />
+                          <Input label="Height (CM)" type="number" value={pkg.height} onChange={v => {
+                            const newPkgs = [...formData.packages];
+                            newPkgs[index].height = parseFloat(v) || 0;
+                            setFormData(p => ({ ...p, packages: newPkgs }));
+                          }} min={packageDimensionsMin.toString()} max={packageDimensionsMax.toString()} />
+                          <Input label="Depth (CM)" type="number" value={pkg.depth} onChange={v => {
+                            const newPkgs = [...formData.packages];
+                            newPkgs[index].depth = parseFloat(v) || 0;
+                            setFormData(p => ({ ...p, packages: newPkgs }));
+                          }} min={packageDimensionsMin.toString()} max={packageDimensionsMax.toString()} />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  );
+                })}
+                <button onClick={addPackage} className="w-full utility-button py-3 mt-4 flex items-center justify-center gap-2">
+                  <Plus className="w-5 h-5" />
+                  Add Piece
+                </button>
 
-              <div className="bg-dhl-yellow/10 p-6 rounded-2xl flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <Info className="w-5 h-5 text-dhl-red" />
-                  <span className="font-bold text-gray-700 dark:text-gray-300">Total Calculation</span>
-                </div>
-                <div className="flex gap-8">
-                  <div className="text-right">
-                    <p className="text-[10px] uppercase font-bold text-gray-400">Total Pieces</p>
-                    <p className="text-xl font-black text-dhl-red italic">{formData.packages.reduce((s, p) => s + p.quantity, 0)}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] uppercase font-bold text-gray-400">Total Weight</p>
-                    <p className="text-xl font-black text-dhl-red italic">{totalPackageWeight.toFixed(2)} KG</p>
-                  </div>
+                <div className="text-right space-y-2 pt-4">
+                  <p className="text-sm font-bold">Total Packages: {formData.packages.reduce((sum, p) => sum + p.quantity, 0)}</p>
+                  <p className="text-sm font-bold">Total Weight: {totalPackageWeight.toFixed(3)} KG</p>
                 </div>
               </div>
             </div>
@@ -835,45 +851,47 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
               <h3 className="text-xl font-bold uppercase tracking-tight">{t('paymentStep')}</h3>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-6">
-                <h4 className="font-bold text-gray-500 uppercase text-xs tracking-widest flex items-center gap-2">
-                  <User className="w-4 h-4" /> Account Information
-                </h4>
-                <Input label="Shipper Account Number" value={formData.payment.shipperAccount} onChange={v => updateSection('payment', { shipperAccount: v })} />
-                <Input label="Billing Account Number" value={formData.payment.billingAccount} onChange={v => updateSection('payment', { billingAccount: v })} />
+            <div className="space-y-6">
+              <Input label={t('shipperAccount')} value={formData.payment.shipperAccount} onChange={v => {
+                const newShipper = v;
+                let newBilling = formData.payment.billingAccount;
+                if (formData.payment.billingAccount === formData.payment.shipperAccount) {
+                  newBilling = newShipper;
+                }
+                updateSection('payment', { shipperAccount: newShipper, billingAccount: newBilling });
+              }} required ruleKey="accountNumber" inputMode="numeric" pattern="[0-9]*" />
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <input type="checkbox" id="use-shipper-for-billing" checked={formData.payment.billingAccount === formData.payment.shipperAccount} onChange={e => {
+                    if (e.target.checked) {
+                      updateSection('payment', { billingAccount: formData.payment.shipperAccount });
+                    } else {
+                      updateSection('payment', { billingAccount: '' });
+                    }
+                  }} className="w-5 h-5 text-dhl-red focus:ring-dhl-yellow border-gray-300 rounded" />
+                  <label htmlFor="use-shipper-for-billing" className="text-sm font-bold">{t('useShipperForBilling')}</label>
+                </div>
+                {formData.payment.billingAccount !== formData.payment.shipperAccount && (
+                  <Input label={t('billingAccount')} value={formData.payment.billingAccount} onChange={v => updateSection('payment', { billingAccount: v })} required ruleKey="accountNumber" inputMode="numeric" pattern="[0-9]*" />
+                )}
               </div>
 
-              <div className="space-y-6">
-                <h4 className="font-bold text-gray-500 uppercase text-xs tracking-widest flex items-center gap-2">
-                  <Globe className="w-4 h-4" /> Duties & Taxes
-                </h4>
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Incoterm</label>
-                  <select
-                    value={formData.payment.incoterm}
-                    onChange={e => updateSection('payment', { incoterm: e.target.value })}
-                    className="w-full p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 font-bold focus:ring-2 focus:ring-dhl-yellow outline-none"
-                  >
-                    <option value="DAP">DAP - Delivered At Place</option>
-                    <option value="DDP">DDP - Delivered Duty Paid</option>
-                    <option value="EXW">EXW - Ex Works</option>
-                  </select>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <input type="checkbox" id="receiver-pays-checkbox" checked={formData.payment.dutiesRole === 'receiver'} onChange={e => {
+                    updateSection('payment', { dutiesRole: e.target.checked ? 'receiver' : 'shipper', dutiesAccount: e.target.checked ? '' : formData.payment.dutiesAccount });
+                  }} className="w-5 h-5 text-dhl-red focus:ring-dhl-yellow border-gray-300 rounded" />
+                  <label htmlFor="receiver-pays-checkbox" className="text-sm font-bold">{t('receiverWillPay')}</label>
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-2xl space-y-3">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase">Billing Role</p>
-                  <div className="flex gap-4">
-                    {['shipper', 'receiver', 'third_party'].map(role => (
-                      <button
-                        key={role}
-                        onClick={() => updateSection('payment', { paymentRole: role })}
-                        className={`flex-1 py-3 rounded-xl font-bold text-xs uppercase transition-all ${formData.payment.paymentRole === role ? 'bg-dhl-red text-white shadow-lg shadow-red-500/20' : 'bg-white dark:bg-gray-800 text-gray-400'}`}
-                      >
-                        {role.replace('_', ' ')}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <Input label={t('dutiesAccount')} value={formData.payment.dutiesAccount} onChange={v => updateSection('payment', { dutiesAccount: v })} required={formData.payment.dutiesRole !== 'receiver'} ruleKey="accountNumber" disabled={formData.payment.dutiesRole === 'receiver'} inputMode="numeric" pattern="[0-9]*" />
+              </div>
+
+              <div className="space-y-4">
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('incoterm')}</label>
+                <select value={formData.payment.incoterm} onChange={e => updateSection('payment', { incoterm: e.target.value })} className="w-full p-4 pr-12 rounded-xl border-2 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-dhl-yellow outline-none font-bold transition-all hover:border-gray-200 border-gray-50 dark:border-gray-700">
+                  {incotermsData.map((inc: any) => <option key={inc.incoterm} value={inc.incoterm}>{inc.incoterm} - {inc.incotermName}</option>)}
+                </select>
               </div>
             </div>
           </div>
