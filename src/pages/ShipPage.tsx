@@ -67,12 +67,19 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
         <div className="relative">
           <select
             className={`w-full p-4 pr-12 rounded-xl border-2 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-dhl-yellow outline-none font-bold disabled:opacity-50 transition-all ${readOnlyCountry ? 'bg-gray-50 border-none pointer-events-none' : 'hover:border-gray-200'} ${countryError ? 'border-dhl-red ring-4 ring-red-500/10' : 'border-gray-50 dark:border-gray-700'}`}
-            value={data.country}
+            value={data.country || ""}
             onChange={e => onChange({ ...data, country: e.target.value })}
             disabled={readOnlyCountry}
           >
-            {showCountryPlaceholder && <option value="" disabled>{t('typeOrSelectCountry' as any)}</option>}
-            {countries.map((c: any, index: number) => <option key={`${c.countryCode}-${index}`} value={c.countryCode}>{c.countryName || c.name}</option>)}
+            <option value="" disabled={!showCountryPlaceholder}>
+              {t('typeOrSelectCountry' as any)}
+            </option>
+            
+            {countries.map((c: any, index: number) => (
+              <option key={`${c.countryCode}-${index}`} value={c.countryCode}>
+                {c.countryName || c.name}
+              </option>
+            ))}
           </select>
           {!data.country && (
             <span className="absolute right-10 top-1/2 -translate-y-1/2 text-dhl-red font-black text-xl animate-pulse pointer-events-none">*</span>
@@ -139,8 +146,11 @@ const Input = ({ label, value, onChange, type = 'text', required, disabled, read
   const isEmailInvalid = isEmail && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   const isPhoneTooShort = isPhone && value && value.toString().length < 4;
 
+  const isAccountNumber = ruleKey === 'accountNumber';
+  const isAccLengthInvalid = isAccountNumber && value && value.toString().length !== rule?.length;
+
   // A 'hard error' is something that prevents proceeding (missing or invalid format)
-  const isHardError = showError && (isMissingValue || isEmailInvalid || isPhoneTooShort);
+  const isHardError = showError && (isMissingValue || isEmailInvalid || isPhoneTooShort || isAccLengthInvalid);
 
   const handleTextChange = (v: string) => {
     if (type === 'date' || type === 'number') {
@@ -191,6 +201,11 @@ const Input = ({ label, value, onChange, type = 'text', required, disabled, read
       )}
       {showError && isMissingValue && (
         <p className="text-[10px] font-bold text-dhl-red ml-1 animate-in fade-in slide-in-from-top-1">This field is required</p>
+      )}
+      {showError && isAccLengthInvalid && !isMissingValue && (
+        <p className="text-[10px] font-bold text-dhl-red ml-1 animate-in fade-in slide-in-from-top-1">
+          Account number must be exactly {rule?.length} digits
+        </p>
       )}
       {showError && (isEmailInvalid || isPhoneTooShort) && !isMissingValue && (
         <p className="text-[10px] font-bold text-dhl-red ml-1 animate-in fade-in slide-in-from-top-1">
@@ -330,14 +345,14 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
         }).filter((c: any, index: number, arr: any[]) => arr.findIndex((c2: any) => c2.countryCode === c.countryCode) === index);
 
         setCountries(finalized);
-        setFormData(prev => ({ ...prev, receiver: { ...prev.receiver, country: finalized[0]?.countryCode || '' } }));
+        setFormData(prev => ({ ...prev, receiver: { ...prev.receiver, country: '' } }));
         setLoading(false);
       } catch (error) {
         console.error("Error fetching live country data, falling back to local:", error);
         if (countriesData && countriesData.length > 0) {
           const uniqueCountries = countriesData.filter((c: any, index: number, arr: any[]) => arr.findIndex((c2: any) => c2.code === c.code) === index);
           setCountries(uniqueCountries);
-          setFormData(prev => ({ ...prev, receiver: { ...prev.receiver, country: uniqueCountries[0]?.code || '' } }));
+          setFormData(prev => ({ ...prev, receiver: { ...prev.receiver, country: '' } }));
         }
         setLoading(false);
       }
@@ -358,45 +373,61 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
 
   const handleNext = () => {
     if (currentStep === 1) {
-      // Basic validation for Step 1 mandatory fields
-      const { shipper, receiver } = formData;
-      
-      // Email format validation function
-      const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-      
-      // Shipper validation: email is required and must be valid format
-      const isShipperValid = shipper.name && shipper.company && shipper.address1 && shipper.city && shipper.phone && shipper.email && isValidEmail(shipper.email);
-      
-      // Receiver validation: email is optional but if provided must be valid format
-      const isReceiverValid = receiver.name && receiver.company && receiver.country && receiver.address1 && receiver.city && receiver.phone && (!receiver.email || isValidEmail(receiver.email));
+    const { shipper, receiver } = formData;
+    const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    
+    const isShipperValid = shipper.name && shipper.company && shipper.address1 && shipper.city && shipper.phone && shipper.email && isValidEmail(shipper.email);
+    const isReceiverValid = receiver.name && receiver.company && receiver.country && receiver.address1 && receiver.city && receiver.phone && (!receiver.email || isValidEmail(receiver.email));
 
-      if (!isShipperValid || !isReceiverValid) {
-        setShowValidationErrors(true);
-        // Optional: toast or scroll to first error
-        return;
-      }
+    if (!isShipperValid || !isReceiverValid) {
+      setShowValidationErrors(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return; 
     }
+  }
 
     if (currentStep === 2) {
-      // Validation for Step 2 mandatory fields
-      if (formData.shipMethod === 'document') {
-        if (!formData.shipDate || !formData.documentDescription.trim()) {
+      const { shipMethod, shipDate, documentDescription, invoice, summarizeShipment } = formData;
+
+      if (!shipDate) {
+        setShowValidationErrors(true);
+        return;
+      }
+
+      if (shipMethod === 'document') {
+        if (!documentDescription.trim()) {
           setShowValidationErrors(true);
           return;
         }
       } else {
-        // Block package shipments
-        setShowValidationErrors(true);
-        return;
+        const hasItems = invoice.items.length > 0;
+        const allItemsHaveDesc = invoice.items.every(item => item.description && item.description.trim() !== '');
+        
+        const needsSummary = invoice.items.length > 1;
+        const hasSummary = summarizeShipment && summarizeShipment.trim() !== '';
+
+        if (!hasItems || !allItemsHaveDesc || (needsSummary && !hasSummary)) {
+          setShowValidationErrors(true);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
       }
     }
 
     if (currentStep === 4) {
-      // Validation for Step 4 mandatory fields
+      const requiredLength = appConfig.validationRules.accountNumber.length;
       const { payment } = formData;
-      if (!payment.shipperAccount || !payment.billingAccount || (payment.dutiesRole !== 'receiver' && !payment.dutiesAccount) || !payment.incoterm) {
+      const isValidAcc = (acc: string) => acc && acc.length === requiredLength;
+
+      const isShipperAccValid = isValidAcc(payment.shipperAccount);
+      const isBillingAccValid = isValidAcc(payment.billingAccount);
+      const isDutiesAccValid = payment.dutiesRole === 'receiver' || isValidAcc(payment.dutiesAccount);
+
+      if (!isShipperAccValid || !isBillingAccValid || !isDutiesAccValid || !payment.incoterm) {
         setShowValidationErrors(true);
-        return;
+        // แจ้งเตือนสั้นๆ เพื่อให้รู้ว่าทำไมถึงกด Next ไม่ไป
+        console.warn("Validation failed in Step 4"); 
+        return; 
       }
     }
 
