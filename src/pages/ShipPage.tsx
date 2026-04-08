@@ -221,6 +221,13 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
       if (data.suburb && showSuburb) params.append('countyName', data.suburb);
       
       const res = await fetch(`/api/validate-address?${params.toString()}`);
+      const contentType = res.headers.get("content-type");
+      
+      if (!res.ok || !contentType || !contentType.includes("application/json")) {
+        console.warn("Address validation API not available (likely local dev). Deploy to test.");
+        return;
+      }
+
       const responseData = await res.json();
       
       if (!res.ok) {
@@ -263,10 +270,13 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
 
       try {
         const response = await fetch(`/api/validate-address?${params.toString()}`);
-        if (!response.ok) {
+        const contentType = response.headers.get("content-type");
+
+        if (!response.ok || !contentType || !contentType.includes("application/json")) {
           setShowSuggestions(false);
           return;
         }
+        
         const result = await response.json();
         const locations = result?.postalLocationList;
 
@@ -380,7 +390,15 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
                             const pCode = loc.postalCode || '';
                             const cName = loc.cityName || loc.city || '';
                             const sName = loc.cityDistrict || loc.countyName || '';
-                            const displayText = [pCode, cName, sName].filter(Boolean).join(' ');
+                            
+                            const displayTextParts = [];
+                            if (pCode) displayTextParts.push(pCode);
+                            if (cName) displayTextParts.push(cName);
+                            if (sName && sName.toLowerCase() !== cName.toLowerCase()) {
+                              displayTextParts.push(`- ${sName}`);
+                            }
+                            
+                            const displayText = displayTextParts.join(' ');
                             
                             return (
                                 <div
@@ -389,11 +407,6 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
                                     className="p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer transition-all border-b border-gray-50 dark:border-gray-800 last:border-0"
                                 >
                                     <p className="font-bold text-sm text-gray-900 dark:text-white">{displayText}</p>
-                                    <div className="flex gap-2 text-[10px] text-gray-400 font-bold uppercase mt-1">
-                                        {pCode && <span>{pCode}</span>}
-                                        {cName && <span>{cName}</span>}
-                                        {sName && <span>{sName}</span>}
-                                    </div>
                                 </div>
                             );
                         })}
@@ -711,7 +724,12 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
     const fetchCountries = async () => {
       try {
         const response = await fetch('/api/address-reference?datasetName=country');
-        if (!response.ok) throw new Error('API fetch failed');
+        const contentType = response.headers.get("content-type");
+
+        if (!response.ok || !contentType || !contentType.includes("application/json")) {
+           throw new Error('API fetch failed or returned non-JSON (likely local dev)');
+        }
+
         const data = await response.json();
         const transformed = transformCountryData(data);
 
