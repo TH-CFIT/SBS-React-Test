@@ -180,12 +180,41 @@ const Combobox = ({
 // --- Sub Components ---
 const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyCountry = false, showError = false, requiredEmail = true }: { title: string, data: any, onChange: (d: any) => void, countries: any[], bgClass?: string, readOnlyCountry?: boolean, showError?: boolean, requiredEmail?: boolean }) => {
   const { t } = useLanguage();
+  const [validationWarning, setValidationWarning] = useState<string | null>(null);
 
   const selectedCountry = countries.find((c: any) => c.countryCode === data.country);
   const mode = selectedCountry?.postalLocationTypeCode || 'CP';
 
   const showPostal = mode === 'CP';
   const showSuburb = mode === 'S' && 'suburb' in data;
+
+  const validateAddress = async () => {
+    if (!data.country) return;
+    if (!data.postalCode && !data.city && !data.suburb) return;
+    setValidationWarning(null);
+
+    try {
+      const params = new URLSearchParams({ countryCode: data.country });
+      if (data.postalCode && showPostal) params.append('postalCode', data.postalCode);
+      if (data.city) params.append('city', data.city);
+      if (data.suburb && showSuburb) params.append('countyName', data.suburb);
+      
+      const res = await fetch(`/api/validate-address?${params.toString()}`);
+      const responseData = await res.json();
+      
+      if (!res.ok) {
+        if (responseData.details && responseData.details.addressValidationMessage) {
+           setValidationWarning(responseData.details.addressValidationMessage);
+        } else if (responseData.details && responseData.details.detail) {
+           setValidationWarning(responseData.details.detail);
+        } else {
+           setValidationWarning("Invalid address combination according to DHL.");
+        }
+      }
+    } catch (e) {
+      console.error("Address validation check failed:", e);
+    }
+  };
 
   return (
     <div className={`card space-y-6 ${bgClass} transition-shadow hover:shadow-2xl`}>
@@ -212,7 +241,7 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
           label={t('country' as any)} 
           value={data.country} 
           options={countries} 
-          onChange={val => onChange({ ...data, country: val })}
+          onChange={val => { onChange({ ...data, country: val }); setValidationWarning(null); }}
           showError={showError}
           required
           displayValue={(c) => c.countryName || c.name}
@@ -222,6 +251,14 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
 
       {data.country && (
         <div className="space-y-6 pt-4 border-t border-gray-50 animate-in fade-in slide-in-from-top-4 duration-500">
+          
+          {validationWarning && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/30 border-2 border-dhl-yellow rounded-xl p-4 flex items-start gap-3 animate-in fade-in">
+              <AlertCircle className="w-5 h-5 text-dhl-yellow flex-shrink-0 mt-0.5" />
+              <p className="text-sm font-bold text-yellow-800 dark:text-yellow-200">{validationWarning}</p>
+            </div>
+          )}
+
           <div className="space-y-4">
             <Input label={t('address1' as any)} value={data.address1} onChange={(v: any) => onChange({ ...data, address1: v })} required ruleKey="address1" showError={showError} />
             <Input label={t('address2' as any)} value={data.address2} onChange={(v: any) => onChange({ ...data, address2: v })} ruleKey="address2" showError={showError} />
@@ -230,12 +267,12 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
 
           <div className={`grid grid-cols-1 ${(showPostal || showSuburb) ? 'md:grid-cols-2' : ''} gap-4`}>
             {showPostal && (
-              <Input label={t('postalCode' as any)} value={data.postalCode} onChange={(v: any) => onChange({ ...data, postalCode: v })} required ruleKey="postalcode" showError={showError} />
+              <Input label={t('postalCode' as any)} value={data.postalCode} onChange={(v: any) => onChange({ ...data, postalCode: v })} onBlur={validateAddress} required ruleKey="postalcode" showError={showError} />
             )}
             {showSuburb && (
-              <Input label={t('suburb' as any)} value={data.suburb} onChange={(v: any) => onChange({ ...data, suburb: v })} required ruleKey="suburb" showError={showError} />
+              <Input label={t('suburb' as any)} value={data.suburb} onChange={(v: any) => onChange({ ...data, suburb: v })} onBlur={validateAddress} required ruleKey="suburb" showError={showError} />
             )}
-            <Input label={t('city' as any)} value={data.city} onChange={(v: any) => onChange({ ...data, city: v })} required ruleKey="city" showError={showError} />
+            <Input label={t('city' as any)} value={data.city} onChange={(v: any) => onChange({ ...data, city: v })} onBlur={validateAddress} required ruleKey="city" showError={showError} />
           </div>
 
           <div className="space-y-4">
@@ -257,7 +294,7 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
   );
 };
 
-const Input = ({ label, value, onChange, type = 'text', required, disabled, readOnly, ruleKey, showError, min, max, placeholder, inputMode, pattern }: { label: string, value: any, onChange?: (v: any) => void, type?: string, required?: boolean, disabled?: boolean, readOnly?: boolean, ruleKey?: string, showError?: boolean, min?: string, max?: string, placeholder?: string, inputMode?: "none" | "text" | "tel" | "url" | "email" | "numeric" | "decimal" | "search", pattern?: string }) => {
+const Input = ({ label, value, onChange, onBlur, type = 'text', required, disabled, readOnly, ruleKey, showError, min, max, placeholder, inputMode, pattern }: { label: string, value: any, onChange?: (v: any) => void, onBlur?: () => void, type?: string, required?: boolean, disabled?: boolean, readOnly?: boolean, ruleKey?: string, showError?: boolean, min?: string, max?: string, placeholder?: string, inputMode?: "none" | "text" | "tel" | "url" | "email" | "numeric" | "decimal" | "search", pattern?: string }) => {
   const { t } = useLanguage();
   const rule = ruleKey ? (appConfig.validationRules as any)[ruleKey] : null;
   const maxLength = rule?.maxLength || rule?.length;
@@ -318,6 +355,7 @@ const Input = ({ label, value, onChange, type = 'text', required, disabled, read
           type={type}
           value={value}
           onChange={e => handleTextChange(e.target.value)}
+          onBlur={onBlur}
           disabled={disabled}
           readOnly={readOnly}
           maxLength={maxLength}

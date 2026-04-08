@@ -7,7 +7,7 @@ export const buildShipmentPayload = (formData: any, isTestEnvironment: boolean =
     const isPickupRequested = pickup.required;
     const createInvoiceRequested = invoice.items.length > 0;
     const receiverPaysTaxes = payment.dutiesRole === 'receiver';
-    const isDocUploadRequested = invoice.uploadedDocs && invoice.uploadedDocs.length > 0;
+    const isDocUploadRequested = invoice.uploadDocuments;
 
     let payload: any = {};
     let valueAddedServices: any[] = [];
@@ -173,7 +173,7 @@ export const buildShipmentPayload = (formData: any, isTestEnvironment: boolean =
             const packageData = {
                 weight: parseFloat(pkg.weight) || 0.5,
                 dimensions: {
-                    length: parseFloat(pkg.length) || 10,
+                    length: parseFloat(pkg.length || pkg.depth) || 10,
                     width: parseFloat(pkg.width) || 10,
                     height: parseFloat(pkg.height) || 10,
                 },
