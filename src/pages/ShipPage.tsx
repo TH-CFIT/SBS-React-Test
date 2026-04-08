@@ -545,7 +545,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const response = await fetch('https://sbs-back-test.vercel.app/api/address-reference?datasetName=country');
+        const response = await fetch('/api/address-reference?datasetName=country');
         if (!response.ok) throw new Error('API fetch failed');
         const data = await response.json();
         const transformed = transformCountryData(data);
