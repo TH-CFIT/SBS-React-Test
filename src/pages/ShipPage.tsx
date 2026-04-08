@@ -587,6 +587,81 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
   const [validationErrors, setValidationErrors] = useState<Record<string, boolean>>({});
   const [isDragging, setIsDragging] = useState(false);
   const [printSize, setPrintSize] = useState<'A4' | 'Label' | null>(null);
+  const [pickupSuggestions, setPickupSuggestions] = useState<any[]>([]);
+  const [showPickupSuggestions, setShowPickupSuggestions] = useState(false);
+  const [pickupValidationWarning, setPickupValidationWarning] = useState<string | null>(null);
+  const pickupSuggestionsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (pickupSuggestionsRef.current && !pickupSuggestionsRef.current.contains(event.target as Node)) {
+        setShowPickupSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const validatePickupAddress = async () => {
+    if (!tempPickupAddress.country) return;
+    if (!tempPickupAddress.postalCode && !tempPickupAddress.city) return;
+    setPickupValidationWarning(null);
+
+    try {
+      const params = new URLSearchParams({ countryCode: tempPickupAddress.country });
+      if (tempPickupAddress.postalCode) params.append('postalCode', tempPickupAddress.postalCode);
+      if (tempPickupAddress.city) params.append('city', tempPickupAddress.city);
+
+      const res = await fetch(`/api/validate-address?${params.toString()}`);
+      const contentType = res.headers.get("content-type");
+
+      if (!res.ok || !contentType || !contentType.includes("application/json")) return;
+
+      const responseData = await res.json();
+      if (!res.ok) {
+        setPickupValidationWarning(responseData.details?.addressValidationMessage || responseData.details?.detail || "Invalid address combination according to DHL.");
+      }
+    } catch (e) {
+      console.error("Address validation check failed:", e);
+    }
+  };
+
+  const fetchPickupSuggestions = useRef(
+    debounce(async (value: string, type: string, country: string) => {
+      if (!country || value.length < 2) {
+        setShowPickupSuggestions(false);
+        return;
+      }
+      const params = new URLSearchParams({ countryCode: country });
+      if (type === 'postalCode') params.append('postalCode', value);
+      else if (type === 'city') {
+        if (value.length < 3) { setShowPickupSuggestions(false); return; }
+        params.append('city', value);
+      }
+      try {
+        const response = await fetch(`/api/validate-address?${params.toString()}`);
+        const contentType = response.headers.get("content-type");
+        if (!response.ok || !contentType?.includes("application/json")) { setShowPickupSuggestions(false); return; }
+        const result = await response.json();
+        const locations = result?.postalLocationList;
+        if (!locations || locations.length === 0) { setShowPickupSuggestions(false); return; }
+        setPickupSuggestions(locations);
+        setShowPickupSuggestions(true);
+      } catch (error) {
+        setShowPickupSuggestions(false);
+      }
+    }, 500)
+  ).current;
+
+  const handlePickupSuggestionSelect = (loc: any) => {
+    setTempPickupAddress({
+      ...tempPickupAddress,
+      postalCode: loc.postalCode || tempPickupAddress.postalCode,
+      city: loc.cityName || loc.city || tempPickupAddress.city,
+    });
+    setShowPickupSuggestions(false);
+    setPickupValidationWarning(null);
+  };
 
   const handleFileAction = (files: File[]) => {
     if (files.length === 0) return;
@@ -1131,7 +1206,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
       ...prev,
       invoice: {
         ...prev.invoice,
-        items: [...prev.invoice.items, { description: '', quantity: 1, weight: 0.1, value: 1, origin: 'TH', units: 'PCS', commodityCode: '' }]
+        items: [...prev.invoice.items, { description: '', quantity: 1, weight: 0.5, value: 1, origin: 'TH', units: 'PCS', commodityCode: '' }]
       }
     }));
     // Collapse previous items, expand new one
@@ -1372,6 +1447,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                                   displayValue={(c) => c.countryName || c.name}
                                   showError={showValidationErrors}
                                   required
+                                  placeholder={t('typeOrSelectCountry' as any)}
                                 />
                               </div>
                             </div>
@@ -1896,9 +1972,51 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                         </div>
                         <Input label="Address 2" value={tempPickupAddress.address2} onChange={v => setTempPickupAddress({ ...tempPickupAddress, address2: v })} />
                         <Input label="Address 3" value={tempPickupAddress.address3} onChange={v => setTempPickupAddress({ ...tempPickupAddress, address3: v })} />
-                        <Input label="City" value={tempPickupAddress.city} onChange={v => setTempPickupAddress({ ...tempPickupAddress, city: v })} required />
-                        <Input label="Postal Code" value={tempPickupAddress.postalCode} onChange={v => setTempPickupAddress({ ...tempPickupAddress, postalCode: v })} required />
-                        <Input label="Phone" value={tempPickupAddress.phone} onChange={v => setTempPickupAddress({ ...tempPickupAddress, phone: v })} required />
+                        <div className="sm:col-span-2 relative">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" ref={pickupSuggestionsRef}>
+                            <Input label="City" value={tempPickupAddress.city} onChange={v => { setTempPickupAddress({ ...tempPickupAddress, city: v }); fetchPickupSuggestions(v, 'city', tempPickupAddress.country); }} onBlur={validatePickupAddress} required ruleKey="city" />
+                            <Input label="Postal Code" value={tempPickupAddress.postalCode} onChange={v => { setTempPickupAddress({ ...tempPickupAddress, postalCode: v }); fetchPickupSuggestions(v, 'postalCode', tempPickupAddress.country); }} onBlur={validatePickupAddress} required ruleKey="postalcode" />
+                          </div>
+
+                          {pickupValidationWarning && (
+                            <div className="mt-4 bg-yellow-50 dark:bg-yellow-900/30 border-2 border-dhl-yellow rounded-xl p-4 flex items-start gap-3 animate-in fade-in">
+                              <AlertCircle className="w-5 h-5 text-dhl-yellow flex-shrink-0 mt-0.5" />
+                              <p className="text-sm font-bold text-yellow-800 dark:text-yellow-200">{pickupValidationWarning}</p>
+                            </div>
+                          )}
+
+                          {showPickupSuggestions && pickupSuggestions.length > 0 && (
+                            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200">
+                              <div className="max-h-60 overflow-y-auto custom-scrollbar p-2">
+                                {pickupSuggestions.map((loc, i) => {
+                                  const pCode = loc.postalCode || '';
+                                  const cName = loc.cityName || loc.city || '';
+                                  const sName = loc.cityDistrict || loc.countyName || '';
+
+                                  const displayTextParts = [];
+                                  if (pCode) displayTextParts.push(pCode);
+                                  if (cName) displayTextParts.push(cName);
+                                  if (sName && sName.toLowerCase() !== cName.toLowerCase()) {
+                                    displayTextParts.push(`- ${sName}`);
+                                  }
+
+                                  const displayText = displayTextParts.join(' ');
+
+                                  return (
+                                    <div
+                                      key={i}
+                                      onClick={() => handlePickupSuggestionSelect(loc)}
+                                      className="p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer transition-all border-b border-gray-50 dark:border-gray-800 last:border-0"
+                                    >
+                                      <p className="font-bold text-sm text-gray-900 dark:text-white">{displayText}</p>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <Input label="Phone" value={tempPickupAddress.phone} onChange={v => setTempPickupAddress({ ...tempPickupAddress, phone: v })} required ruleKey="phone" />
                       </div>
                     ) : (
                       <div className="space-y-3 animate-in fade-in duration-300 py-2">
@@ -1998,7 +2116,12 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                     <p className="break-words"><strong>Reference:</strong> {formData.shipmentReference || 'N/A'}</p>
 
                     {formData.shipMethod === 'document' ? (
-                      <p className="break-words"><strong>Description:</strong> {formData.documentDescription || 'Documents'}</p>
+                      <>
+                        <p className="break-words"><strong>Description:</strong> {formData.documentDescription || 'Documents'}</p>
+                        {formData.insurance?.required && (
+                          <p className="break-words"><strong>Insurance:</strong> Extended Liability</p>
+                        )}
+                      </>
                     ) : (
                       <>
                         <p className="break-words"><strong>Insurance:</strong> {formData.insurance?.required ? `${formData.insurance.value} THB` : 'No'}</p>
