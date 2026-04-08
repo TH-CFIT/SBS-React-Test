@@ -22,7 +22,7 @@ import "nouislider/dist/nouislider.css";
 // --- Utils ---
 const debounce = (func: Function, delay: number) => {
   let timeout: any;
-  return function(...args: any[]) {
+  return function (...args: any[]) {
     clearTimeout(timeout);
     timeout = setTimeout(() => func(...args), delay);
   };
@@ -53,22 +53,22 @@ const CountryFlag = ({ code, className = "w-5 h-3.5 object-cover rounded-sm" }: 
   return <img src={getFlagEmoji(code)} alt={code} className={className} />;
 };
 
-const Combobox = ({ 
-  label, 
-  value, 
-  options, 
-  onChange, 
-  placeholder, 
-  showError, 
+const Combobox = ({
+  label,
+  value,
+  options,
+  onChange,
+  placeholder,
+  showError,
   required,
   displayValue = (v: any) => v
-}: { 
-  label: string, 
-  value: string, 
-  options: any[], 
-  onChange: (v: string) => void, 
-  placeholder?: string, 
-  showError?: boolean, 
+}: {
+  label: string,
+  value: string,
+  options: any[],
+  onChange: (v: string) => void,
+  placeholder?: string,
+  showError?: boolean,
   required?: boolean,
   displayValue?: (v: any) => string
 }) => {
@@ -156,7 +156,7 @@ const Combobox = ({
             <span className="pr-4"><Check className="text-green-500 w-5 h-5" strokeWidth={3} /></span>
           )}
         </div>
-        
+
         {isOpen && filteredOptions.length > 0 && (
           <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl z-[100] animate-in fade-in zoom-in duration-200">
             <div className="max-h-60 overflow-y-auto custom-scrollbar p-2">
@@ -219,24 +219,24 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
       if (data.postalCode && showPostal) params.append('postalCode', data.postalCode);
       if (data.city) params.append('city', data.city);
       if (data.suburb && showSuburb) params.append('countyName', data.suburb);
-      
+
       const res = await fetch(`/api/validate-address?${params.toString()}`);
       const contentType = res.headers.get("content-type");
-      
+
       if (!res.ok || !contentType || !contentType.includes("application/json")) {
         console.warn("Address validation API not available (likely local dev). Deploy to test.");
         return;
       }
 
       const responseData = await res.json();
-      
+
       if (!res.ok) {
         if (responseData.details && responseData.details.addressValidationMessage) {
-           setValidationWarning(responseData.details.addressValidationMessage);
+          setValidationWarning(responseData.details.addressValidationMessage);
         } else if (responseData.details && responseData.details.detail) {
-           setValidationWarning(responseData.details.detail);
+          setValidationWarning(responseData.details.detail);
         } else {
-           setValidationWarning("Invalid address combination according to DHL.");
+          setValidationWarning("Invalid address combination according to DHL.");
         }
       }
     } catch (e) {
@@ -276,7 +276,7 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
           setShowSuggestions(false);
           return;
         }
-        
+
         const result = await response.json();
         const locations = result?.postalLocationList;
 
@@ -305,7 +305,7 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
       city: city || data.city,
       suburb: suburb || data.suburb
     });
-    
+
     setShowSuggestions(false);
     setValidationWarning(null);
   };
@@ -331,23 +331,23 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
           </div>
         </div>
       ) : (
-        <Combobox 
-          label={t('country' as any)} 
-          value={data.country} 
-          options={countries} 
-          onChange={val => { 
+        <Combobox
+          label={t('country' as any)}
+          value={data.country}
+          options={countries}
+          onChange={val => {
             if (val !== data.country) {
-                onChange({ 
-                    ...data, 
-                    country: val,
-                    postalCode: '',
-                    city: '',
-                    suburb: ''
-                });
+              onChange({
+                ...data,
+                country: val,
+                postalCode: '',
+                city: '',
+                suburb: ''
+              });
             } else {
-                onChange({ ...data, country: val }); 
+              onChange({ ...data, country: val });
             }
-            setValidationWarning(null); 
+            setValidationWarning(null);
           }}
           showError={showError}
           required
@@ -358,7 +358,7 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
 
       {data.country && (
         <div className="space-y-6 pt-4 border-t border-gray-50 animate-in fade-in slide-in-from-top-4 duration-500">
-          
+
           {validationWarning && (
             <div className="bg-yellow-50 dark:bg-yellow-900/30 border-2 border-dhl-yellow rounded-xl p-4 flex items-start gap-3 animate-in fade-in">
               <AlertCircle className="w-5 h-5 text-dhl-yellow flex-shrink-0 mt-0.5" />
@@ -374,44 +374,44 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
 
           <div className="relative">
             <div className={`grid grid-cols-1 ${(showPostal || showSuburb) ? 'md:grid-cols-2' : ''} gap-4`}>
-                {showPostal && (
+              {showPostal && (
                 <Input label={t('postalCode' as any)} value={data.postalCode} onChange={(v: any) => { onChange({ ...data, postalCode: v }); fetchSuggestions(v, 'postalCode', data.country); }} onBlur={validateAddress} required ruleKey="postalcode" showError={showError} />
-                )}
-                {showSuburb && (
+              )}
+              {showSuburb && (
                 <Input label={t('suburb' as any)} value={data.suburb} onChange={(v: any) => { onChange({ ...data, suburb: v }); fetchSuggestions(v, 'suburb', data.country); }} onBlur={validateAddress} required ruleKey="suburb" showError={showError} />
-                )}
-                <Input label={t('city' as any)} value={data.city} onChange={(v: any) => { onChange({ ...data, city: v }); fetchSuggestions(v, 'city', data.country); }} onBlur={validateAddress} required ruleKey="city" showError={showError} />
+              )}
+              <Input label={t('city' as any)} value={data.city} onChange={(v: any) => { onChange({ ...data, city: v }); fetchSuggestions(v, 'city', data.country); }} onBlur={validateAddress} required ruleKey="city" showError={showError} />
             </div>
 
             {showSuggestions && suggestions.length > 0 && (
-                <div ref={suggestionsRef} className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200">
-                    <div className="max-h-60 overflow-y-auto custom-scrollbar p-2">
-                        {suggestions.map((loc, i) => {
-                            const pCode = loc.postalCode || '';
-                            const cName = loc.cityName || loc.city || '';
-                            const sName = loc.cityDistrict || loc.countyName || '';
-                            
-                            const displayTextParts = [];
-                            if (pCode) displayTextParts.push(pCode);
-                            if (cName) displayTextParts.push(cName);
-                            if (sName && sName.toLowerCase() !== cName.toLowerCase()) {
-                              displayTextParts.push(`- ${sName}`);
-                            }
-                            
-                            const displayText = displayTextParts.join(' ');
-                            
-                            return (
-                                <div
-                                    key={i}
-                                    onClick={() => handleSuggestionSelect(loc)}
-                                    className="p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer transition-all border-b border-gray-50 dark:border-gray-800 last:border-0"
-                                >
-                                    <p className="font-bold text-sm text-gray-900 dark:text-white">{displayText}</p>
-                                </div>
-                            );
-                        })}
-                    </div>
+              <div ref={suggestionsRef} className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div className="max-h-60 overflow-y-auto custom-scrollbar p-2">
+                  {suggestions.map((loc, i) => {
+                    const pCode = loc.postalCode || '';
+                    const cName = loc.cityName || loc.city || '';
+                    const sName = loc.cityDistrict || loc.countyName || '';
+
+                    const displayTextParts = [];
+                    if (pCode) displayTextParts.push(pCode);
+                    if (cName) displayTextParts.push(cName);
+                    if (sName && sName.toLowerCase() !== cName.toLowerCase()) {
+                      displayTextParts.push(`- ${sName}`);
+                    }
+
+                    const displayText = displayTextParts.join(' ');
+
+                    return (
+                      <div
+                        key={i}
+                        onClick={() => handleSuggestionSelect(loc)}
+                        className="p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer transition-all border-b border-gray-50 dark:border-gray-800 last:border-0"
+                      >
+                        <p className="font-bold text-sm text-gray-900 dark:text-white">{displayText}</p>
+                      </div>
+                    );
+                  })}
                 </div>
+              </div>
             )}
           </div>
 
@@ -593,10 +593,10 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
 
     // Validate 1 file only
     if (files.length > 1 || formData.invoice.uploadedDocs.length >= 1) {
-       setValidationMessage('You can upload only 1 file. Please remove the existing file before uploading a new one.');
-       setShowValidationErrors(true);
-       window.scrollTo({ top: 0, behavior: 'smooth' });
-       return;
+      setValidationMessage('You can upload only 1 file. Please remove the existing file before uploading a new one.');
+      setShowValidationErrors(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
     }
 
     const file = files[0];
@@ -727,7 +727,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
         const contentType = response.headers.get("content-type");
 
         if (!response.ok || !contentType || !contentType.includes("application/json")) {
-           throw new Error('API fetch failed or returned non-JSON (likely local dev)');
+          throw new Error('API fetch failed or returned non-JSON (likely local dev)');
         }
 
         const data = await response.json();
@@ -758,23 +758,23 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
   }, []);
 
   useEffect(() => {
-     setFormData(prev => ({
-       ...prev,
-       pickup: {
-         ...prev.pickup,
-         address: {
-           name: prev.shipper.name,
-           company: prev.shipper.company,
-           address1: prev.shipper.address1,
-           address2: prev.shipper.address2,
-           address3: prev.shipper.address3,
-           city: prev.shipper.city,
-           postalCode: prev.shipper.postalCode,
-           phone: prev.shipper.phone,
-           country: prev.shipper.country
-         }
-       }
-     }));
+    setFormData(prev => ({
+      ...prev,
+      pickup: {
+        ...prev.pickup,
+        address: {
+          name: prev.shipper.name,
+          company: prev.shipper.company,
+          address1: prev.shipper.address1,
+          address2: prev.shipper.address2,
+          address3: prev.shipper.address3,
+          city: prev.shipper.city,
+          postalCode: prev.shipper.postalCode,
+          phone: prev.shipper.phone,
+          country: prev.shipper.country
+        }
+      }
+    }));
   }, [formData.shipper]);
 
   useEffect(() => {
@@ -790,19 +790,19 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
     // User wants "immersive": when first time select date in another day (future), 
     // it should snap to the earliest possible slot (9:30 AM).
     if (formData.shipDate !== today) {
-       // Future date selected: snap to 09:30 (absoluteMin is 570)
-       updateSection('pickup', {
-         readyTime: toTimeString(570),
-         closeTime: toTimeString(750) // 12:30 (margin of 180 mins)
-       });
+      // Future date selected: snap to 09:30 (absoluteMin is 570)
+      updateSection('pickup', {
+        readyTime: toTimeString(570),
+        closeTime: toTimeString(750) // 12:30 (margin of 180 mins)
+      });
     } else {
-       // Change back to today: if current start is invalid, snap to minStart
-       if (currentStart < minStart) {
-         updateSection('pickup', {
-            readyTime: toTimeString(minStart),
-            closeTime: toTimeString(Math.min(1080, minStart + 180)) // ensure 3h window if possible
-         });
-       }
+      // Change back to today: if current start is invalid, snap to minStart
+      if (currentStart < minStart) {
+        updateSection('pickup', {
+          readyTime: toTimeString(minStart),
+          closeTime: toTimeString(Math.min(1080, minStart + 180)) // ensure 3h window if possible
+        });
+      }
     }
   }, [formData.shipDate]);
 
@@ -834,9 +834,9 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
       const now = new Date();
       const currentMinutes = now.getHours() * 60 + now.getMinutes();
       const rounded = Math.ceil(currentMinutes / 30) * 30;
-      return Math.max(absoluteMin, rounded); 
+      return Math.max(absoluteMin, rounded);
     }
-    return absoluteMin; 
+    return absoluteMin;
   };
 
   const toMinutes = (time: string) => {
@@ -963,7 +963,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
       const errors: string[] = [];
       const newFieldErrorMap: Record<string, boolean> = {};
       const rules = appConfig.validationRules.package;
-      
+
       const totalPkgQty = formData.packages.reduce((sum, p) => sum + (p.quantity || 0), 0);
       if (totalPkgQty < rules.quantity.min || totalPkgQty > rules.quantity.max) {
         errors.push(`Total Packages must be between ${rules.quantity.min} and ${rules.quantity.max} (Current total: ${totalPkgQty})`);
@@ -1056,8 +1056,8 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
 
     try {
       // 1. Build the real payload including the printSize
-      const payload = buildShipmentPayload({ ...formData, printSize }, false); 
-      
+      const payload = buildShipmentPayload({ ...formData, printSize }, false);
+
       console.log("DEBUG: Final Payload for API:", JSON.stringify(payload, null, 2));
 
       // 2. Call the Vercel API Proxy
@@ -1079,7 +1079,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
         // API Error logic
         const errorMsg = data.detail || data.message || "An error occurred with the DHL API";
         const additionalErrors = data.additionalMessages?.map((m: any) => m.description).join(' • ') || "";
-        
+
         setShowValidationErrors(true);
         setValidationMessage(`${errorMsg}${additionalErrors ? ` (${additionalErrors})` : ''}`);
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1178,7 +1178,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
 
           return (
             <React.Fragment key={step.id}>
-              <div 
+              <div
                 className={`flex flex-col items-center gap-2 min-w-fit px-4 transition-all ${isDisabled ? 'opacity-30 cursor-not-allowed' : (isCompleted ? 'cursor-pointer hover:opacity-80' : 'cursor-not-allowed')}`}
                 onClick={() => {
                   if (isCompleted && !isDisabled) {
@@ -1275,7 +1275,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
 
             {formData.shipMethod === 'document' && (
               <div className="space-y-6 pt-6 border-t border-gray-100 animate-in slide-in-from-bottom-4 duration-500">
-                <Combobox 
+                <Combobox
                   label={t('describeDocuments' as any)}
                   value={formData.documentDescription}
                   options={documentTypes}
@@ -1364,15 +1364,15 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                                     </select>
                                   </div>
                                 </div>
-                                  <Combobox 
-                                    label={t('whereWasItMade' as any)}
-                                    value={item.origin}
-                                    options={countries}
-                                    onChange={v => { const n = [...formData.invoice.items]; n[i].origin = v; setFormData(p => ({ ...p, invoice: { ...p.invoice, items: n } })) }}
-                                    displayValue={(c) => c.countryName || c.name}
-                                    showError={showValidationErrors}
-                                    required
-                                  />
+                                <Combobox
+                                  label={t('whereWasItMade' as any)}
+                                  value={item.origin}
+                                  options={countries}
+                                  onChange={v => { const n = [...formData.invoice.items]; n[i].origin = v; setFormData(p => ({ ...p, invoice: { ...p.invoice, items: n } })) }}
+                                  displayValue={(c) => c.countryName || c.name}
+                                  showError={showValidationErrors}
+                                  required
+                                />
                               </div>
                             </div>
                           )}
@@ -1420,32 +1420,36 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                   </div>
                 </div>
 
-                {/* Protect Shipment (Insurance) */}
-                <div className="p-6 bg-red-50 dark:bg-red-950/20 border border-dhl-red/20 rounded-3xl space-y-4">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" checked={formData.insurance.required} onChange={e => {
-                      const checked = e.target.checked;
-                      if (checked) {
-                        const totalValue = formData.invoice.items.reduce((s, a) => s + ((a.value || 0) * (a.quantity || 1)), 0);
-                        setFormData(p => ({ ...p, insurance: { required: true, value: totalValue.toFixed(2) } }));
-                      } else {
-                        setFormData(p => ({ ...p, insurance: { required: false, value: '' } }));
-                      }
-                    }} className="w-6 h-6 rounded-md border-gray-300 text-dhl-red focus:ring-dhl-red transition-all cursor-pointer" />
-                    <span className="font-bold text-dhl-red uppercase tracking-wide">{t('protectShipment' as any)}</span>
-                  </label>
-                  {formData.insurance.required && (
-                    <div className="flex items-center gap-4 animate-in slide-in-from-top-2">
-                      <div className="flex-1">
-                        <Input label={t('insuredValue' as any)} type="number" value={formData.insurance.value} disabled />
-                      </div>
-                      <span className="text-xl font-black text-gray-900 dark:text-white mt-4">{formData.invoice.currency}</span>
-                    </div>
-                  )}
-                </div>
-
               </div>
             )}
+
+            {/* Protect Shipment (Insurance) - shown for BOTH document & package */}
+            <div className="p-6 bg-red-50 dark:bg-red-950/20 border border-dhl-red/20 rounded-3xl space-y-4">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={formData.insurance.required} onChange={e => {
+                  const checked = e.target.checked;
+                  if (checked) {
+                    if (formData.shipMethod === 'package') {
+                      const totalValue = formData.invoice.items.reduce((s, a) => s + ((a.value || 0) * (a.quantity || 1)), 0);
+                      setFormData(p => ({ ...p, insurance: { required: true, value: totalValue.toFixed(2) } }));
+                    } else {
+                      setFormData(p => ({ ...p, insurance: { required: true, value: '1' } }));
+                    }
+                  } else {
+                    setFormData(p => ({ ...p, insurance: { required: false, value: '' } }));
+                  }
+                }} className="w-6 h-6 rounded-md border-gray-300 text-dhl-red focus:ring-dhl-red transition-all cursor-pointer" />
+                <span className="font-bold text-dhl-red uppercase tracking-wide">{t('protectShipment' as any)}</span>
+              </label>
+              {formData.insurance.required && formData.shipMethod === 'package' && (
+                <div className="flex items-center gap-4 animate-in slide-in-from-top-2">
+                  <div className="flex-1">
+                    <Input label={t('insuredValue' as any)} type="number" value={formData.insurance.value} disabled />
+                  </div>
+                  <span className="text-xl font-black text-gray-900 dark:text-white mt-4">{formData.invoice.currency}</span>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -1475,69 +1479,69 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                       </div>
                       <div className="p-4 space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                          <Input 
-                            label="Qty" 
-                            type="number" 
-                            value={pkg.quantity} 
+                          <Input
+                            label="Qty"
+                            type="number"
+                            value={pkg.quantity}
                             onChange={v => {
                               const newPkgs = [...formData.packages];
                               newPkgs[index].quantity = parseInt(v) || 0;
                               setFormData(p => ({ ...p, packages: newPkgs }));
-                            }} 
-                            min={appConfig.validationRules.package.quantity.min.toString()} 
-                            max={appConfig.validationRules.package.quantity.max.toString()} 
+                            }}
+                            min={appConfig.validationRules.package.quantity.min.toString()}
+                            max={appConfig.validationRules.package.quantity.max.toString()}
                             showError={showValidationErrors && validationErrors[`pkg-qty-${index}`]}
                           />
-                          <Input 
-                            label="Weight (KG)" 
-                            type="number" 
-                            value={pkg.weight} 
+                          <Input
+                            label="Weight (KG)"
+                            type="number"
+                            value={pkg.weight}
                             onChange={v => {
                               const newPkgs = [...formData.packages];
                               newPkgs[index].weight = parseFloat(v) || 0;
                               setFormData(p => ({ ...p, packages: newPkgs }));
-                            }} 
-                            min={appConfig.validationRules.package.weight.min.toString()} 
-                            max={appConfig.validationRules.package.weight.max.toString()} 
+                            }}
+                            min={appConfig.validationRules.package.weight.min.toString()}
+                            max={appConfig.validationRules.package.weight.max.toString()}
                             showError={showValidationErrors && validationErrors[`pkg-weight-${index}`]}
                           />
-                          <Input 
-                            label="Width (CM)" 
-                            type="number" 
-                            value={pkg.width} 
+                          <Input
+                            label="Width (CM)"
+                            type="number"
+                            value={pkg.width}
                             onChange={v => {
                               const newPkgs = [...formData.packages];
                               newPkgs[index].width = parseFloat(v) || 0;
                               setFormData(p => ({ ...p, packages: newPkgs }));
-                            }} 
-                            min={appConfig.validationRules.package.dimensions.min.toString()} 
-                            max={appConfig.validationRules.package.dimensions.max.toString()} 
+                            }}
+                            min={appConfig.validationRules.package.dimensions.min.toString()}
+                            max={appConfig.validationRules.package.dimensions.max.toString()}
                             showError={showValidationErrors && validationErrors[`pkg-width-${index}`]}
                           />
-                          <Input 
-                            label="Height (CM)" 
-                            type="number" 
-                            value={pkg.height} 
+                          <Input
+                            label="Height (CM)"
+                            type="number"
+                            value={pkg.height}
                             onChange={v => {
                               const newPkgs = [...formData.packages];
                               newPkgs[index].height = parseFloat(v) || 0;
                               setFormData(p => ({ ...p, packages: newPkgs }));
-                            }} 
-                            min={appConfig.validationRules.package.dimensions.min.toString()} 
-                            max={appConfig.validationRules.package.dimensions.max.toString()} 
+                            }}
+                            min={appConfig.validationRules.package.dimensions.min.toString()}
+                            max={appConfig.validationRules.package.dimensions.max.toString()}
                             showError={showValidationErrors && validationErrors[`pkg-height-${index}`]}
                           />
-                          <Input 
-                            label="Depth (CM)" 
-                            type="number" 
-                            value={pkg.depth} 
+                          <Input
+                            label="Depth (CM)"
+                            type="number"
+                            value={pkg.depth}
                             onChange={v => {
                               const newPkgs = [...formData.packages];
                               newPkgs[index].depth = parseFloat(v) || 0;
                               setFormData(p => ({ ...p, packages: newPkgs }));
-                            }} 
-                            min={appConfig.validationRules.package.dimensions.min.toString()} 
-                            max={appConfig.validationRules.package.dimensions.max.toString()} 
+                            }}
+                            min={appConfig.validationRules.package.dimensions.min.toString()}
+                            max={appConfig.validationRules.package.dimensions.max.toString()}
                             showError={showValidationErrors && validationErrors[`pkg-depth-${index}`]}
                           />
                         </div>
@@ -1590,27 +1594,31 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                 )}
               </div>
 
-              <div className="space-y-4">
-                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('dutiesAccount')}</label>
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer bg-gray-50 dark:bg-gray-700 p-4 rounded-xl border-2 border-gray-100 dark:border-gray-600 hover:border-dhl-yellow transition-all">
-                    <input type="checkbox" id="receiver-pays-checkbox" checked={formData.payment.dutiesRole === 'receiver'} onChange={e => {
-                      updateSection('payment', { dutiesRole: e.target.checked ? 'receiver' : 'shipper', dutiesAccount: e.target.checked ? '' : formData.payment.dutiesAccount });
-                    }} className="w-5 h-5 text-dhl-red focus:ring-dhl-yellow border-gray-300 rounded" />
-                    <span className="text-sm font-bold whitespace-nowrap">{t('receiverWillPay')}</span>
-                  </label>
-                  <div className="flex-grow">
-                    <Input label="" value={formData.payment.dutiesAccount} onChange={v => updateSection('payment', { dutiesAccount: v })} required={formData.payment.dutiesRole !== 'receiver'} ruleKey="accountNumber" disabled={formData.payment.dutiesRole === 'receiver'} inputMode="numeric" pattern="[0-9]*" placeholder="Account Number" />
+              {formData.shipMethod !== 'document' && (
+                <>
+                  <div className="space-y-4">
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('dutiesAccount')}</label>
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer bg-gray-50 dark:bg-gray-700 p-4 rounded-xl border-2 border-gray-100 dark:border-gray-600 hover:border-dhl-yellow transition-all">
+                        <input type="checkbox" id="receiver-pays-checkbox" checked={formData.payment.dutiesRole === 'receiver'} onChange={e => {
+                          updateSection('payment', { dutiesRole: e.target.checked ? 'receiver' : 'shipper', dutiesAccount: e.target.checked ? '' : formData.payment.dutiesAccount });
+                        }} className="w-5 h-5 text-dhl-red focus:ring-dhl-yellow border-gray-300 rounded" />
+                        <span className="text-sm font-bold whitespace-nowrap">{t('receiverWillPay')}</span>
+                      </label>
+                      <div className="flex-grow">
+                        <Input label="" value={formData.payment.dutiesAccount} onChange={v => updateSection('payment', { dutiesAccount: v })} required={formData.payment.dutiesRole !== 'receiver'} ruleKey="accountNumber" disabled={formData.payment.dutiesRole === 'receiver'} inputMode="numeric" pattern="[0-9]*" placeholder="Account Number" />
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              <div className="space-y-4">
-                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('incoterm')}</label>
-                <select value={formData.payment.incoterm} onChange={e => updateSection('payment', { incoterm: e.target.value })} className="w-full p-4 pr-12 rounded-xl border-2 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-dhl-yellow outline-none font-bold transition-all hover:border-gray-200 border-gray-50 dark:border-gray-700">
-                  {incotermsData.map((inc: any) => <option key={inc.incoterm} value={inc.incoterm}>{inc.incoterm} - {inc.incotermName}</option>)}
-                </select>
-              </div>
+                  <div className="space-y-4">
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('incoterm')}</label>
+                    <select value={formData.payment.incoterm} onChange={e => updateSection('payment', { incoterm: e.target.value })} className="w-full p-4 pr-12 rounded-xl border-2 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-dhl-yellow outline-none font-bold transition-all hover:border-gray-200 border-gray-50 dark:border-gray-700">
+                      {incotermsData.map((inc: any) => <option key={inc.incoterm} value={inc.incoterm}>{inc.incoterm} - {inc.incotermName}</option>)}
+                    </select>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -1637,11 +1645,11 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                     {t('uploadDocsQuestion' as any) || "Do you want to upload your commercial documents?"}
                   </p>
                   <label className="flex items-center gap-3 cursor-pointer group w-fit">
-                    <input 
-                      type="checkbox" 
-                      checked={formData.invoice.uploadDocuments} 
+                    <input
+                      type="checkbox"
+                      checked={formData.invoice.uploadDocuments}
                       onChange={e => updateSection('invoice', { uploadDocuments: e.target.checked })}
-                      className="w-6 h-6 rounded-md border-gray-300 text-dhl-red focus:ring-dhl-red transition-all cursor-pointer" 
+                      className="w-6 h-6 rounded-md border-gray-300 text-dhl-red focus:ring-dhl-red transition-all cursor-pointer"
                     />
                     <span className="font-bold text-gray-900 dark:text-white uppercase tracking-wide group-hover:text-dhl-red transition-colors">
                       {t('yes' as any) || "Yes"}
@@ -1663,11 +1671,11 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                           {t('uploadLabelCreateInvoice' as any) || "Since you chose to create an invoice, you can optionally upload other documents."}
                         </p>
                         <label className="flex items-center gap-3 cursor-pointer group w-fit">
-                          <input 
-                            type="checkbox" 
-                            checked={formData.invoice.optionalUpload} 
+                          <input
+                            type="checkbox"
+                            checked={formData.invoice.optionalUpload}
                             onChange={e => updateSection('invoice', { optionalUpload: e.target.checked })}
-                            className="w-5 h-5 rounded border-gray-300 text-dhl-red focus:ring-dhl-red transition-all cursor-pointer" 
+                            className="w-5 h-5 rounded border-gray-300 text-dhl-red focus:ring-dhl-red transition-all cursor-pointer"
                           />
                           <span className="text-xs font-bold text-gray-500 uppercase tracking-wide group-hover:text-gray-900 transition-colors">
                             {t('uploadOptional' as any) || "Upload other optional documents"}
@@ -1678,7 +1686,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
 
                     {(formData.invoice.creationMode === 'own' || formData.invoice.optionalUpload) && (
                       <div className="space-y-4">
-                        <div 
+                        <div
                           className={`card bg-gray-50 dark:bg-gray-900/40 border-dashed border-2 p-10 text-center space-y-4 group transition-all ${isDragging ? 'border-dhl-red bg-red-50/50' : 'border-gray-200 dark:border-gray-800 hover:border-dhl-yellow'}`}
                           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                           onDragLeave={() => setIsDragging(false)}
@@ -1699,11 +1707,11 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                               {t('browseForFile' as any) || 'Browse for file'} {t('orDropHere' as any) || 'or drop here'}
                             </p>
                           </div>
-                          <input 
-                            type="file" 
-                            className="hidden" 
-                            id="file-upload" 
-                            onChange={(e) => handleFileAction(Array.from(e.target.files || []))} 
+                          <input
+                            type="file"
+                            className="hidden"
+                            id="file-upload"
+                            onChange={(e) => handleFileAction(Array.from(e.target.files || []))}
                           />
                           <label htmlFor="file-upload" className="btn-secondary inline-block py-3 px-8 cursor-pointer shadow-sm hover:shadow-md transition-all">
                             Choose File
@@ -1720,10 +1728,10 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                               {formData.invoice.uploadedDocs.map((f, i) => (
                                 <div key={i} className="bg-white dark:bg-gray-800 px-4 py-3 rounded-xl text-xs font-bold flex items-center justify-between border shadow-sm group/fixed animate-in zoom-in-95">
                                   <div className="flex items-center gap-2 truncate pr-2">
-                                    <FileText className="w-4 h-4 text-dhl-red" /> 
+                                    <FileText className="w-4 h-4 text-dhl-red" />
                                     <div className="truncate text-left">
                                       <p className="truncate">{f.name}</p>
-                                      <p className="text-[9px] text-gray-400">{(f.size/1024).toFixed(1)} KB</p>
+                                      <p className="text-[9px] text-gray-400">{(f.size / 1024).toFixed(1)} KB</p>
                                     </div>
                                   </div>
                                   <button onClick={() => {
@@ -1755,16 +1763,15 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                 <Truck className="w-6 h-6" />
                 <h3 className="text-xl font-bold uppercase tracking-tight">{t('pickupStep')}</h3>
               </div>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <button
                   type="button"
                   onClick={() => updateSection('pickup', { required: true })}
-                  className={`p-6 rounded-2xl flex flex-col items-center justify-center text-center gap-4 transition-all border-2 ${
-                    formData.pickup.required 
-                      ? 'border-dhl-yellow bg-yellow-50/50 dark:bg-yellow-900/10 shadow-lg shadow-yellow-500/10' 
+                  className={`p-6 rounded-2xl flex flex-col items-center justify-center text-center gap-4 transition-all border-2 ${formData.pickup.required
+                      ? 'border-dhl-yellow bg-yellow-50/50 dark:bg-yellow-900/10 shadow-lg shadow-yellow-500/10'
                       : 'border-gray-100 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 bg-white dark:bg-gray-900'
-                  }`}
+                    }`}
                 >
                   <div className={`p-4 rounded-full transition-colors ${formData.pickup.required ? 'bg-dhl-yellow text-dhl-red' : 'bg-gray-50 dark:bg-gray-800 text-gray-400'}`}>
                     <Truck className="w-8 h-8" />
@@ -1777,11 +1784,10 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                 <button
                   type="button"
                   onClick={() => updateSection('pickup', { required: false })}
-                  className={`p-6 rounded-2xl flex flex-col items-center justify-center text-center gap-4 transition-all border-2 ${
-                    !formData.pickup.required 
-                      ? 'border-dhl-yellow bg-yellow-50/50 dark:bg-yellow-900/10 shadow-lg shadow-yellow-500/10' 
+                  className={`p-6 rounded-2xl flex flex-col items-center justify-center text-center gap-4 transition-all border-2 ${!formData.pickup.required
+                      ? 'border-dhl-yellow bg-yellow-50/50 dark:bg-yellow-900/10 shadow-lg shadow-yellow-500/10'
                       : 'border-gray-100 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 bg-white dark:bg-gray-900'
-                  }`}
+                    }`}
                 >
                   <div className={`p-4 rounded-full transition-colors ${!formData.pickup.required ? 'bg-dhl-yellow text-dhl-red' : 'bg-gray-50 dark:bg-gray-800 text-gray-400'}`}>
                     <XCircle className="w-8 h-8" />
@@ -1799,12 +1805,12 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                     <h4 className="font-bold text-gray-900 dark:text-white uppercase tracking-tight flex items-center gap-2 border-b border-gray-100 dark:border-gray-800 pb-2 mb-4">
                       <Clock className="w-5 h-5 text-dhl-red" /> {t('pickupSendingOn' as any) || "Schedule a Pickup"}
                     </h4>
-                    <Input 
-                      label={t('pickupSendingOn' as any) || "Pickup Date"} 
-                      type="date" 
-                      value={formData.shipDate} 
+                    <Input
+                      label={t('pickupSendingOn' as any) || "Pickup Date"}
+                      type="date"
+                      value={formData.shipDate}
                       min={new Date().toISOString().split('T')[0]}
-                      onChange={v => setFormData({ ...formData, shipDate: v })} 
+                      onChange={v => setFormData({ ...formData, shipDate: v })}
                     />
                   </div>
 
@@ -1827,20 +1833,20 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
 
                   {/* 3. Location */}
                   <div className="md:w-1/2">
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2">{t('pickupLocation' as any) || "Pickup Location"}</label>
-                      <select
-                        value={formData.pickup.location}
-                        onChange={e => updateSection('pickup', { location: e.target.value })}
-                        className="w-full p-4 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 font-bold focus:ring-2 focus:ring-dhl-yellow outline-none"
-                      >
-                        {pickupLocations.map((l: string) => <option key={l} value={l}>{l}</option>)}
-                      </select>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1 mb-2">{t('pickupLocation' as any) || "Pickup Location"}</label>
+                    <select
+                      value={formData.pickup.location}
+                      onChange={e => updateSection('pickup', { location: e.target.value })}
+                      className="w-full p-4 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 font-bold focus:ring-2 focus:ring-dhl-yellow outline-none"
+                    >
+                      {pickupLocations.map((l: string) => <option key={l} value={l}>{l}</option>)}
+                    </select>
                   </div>
 
                   {/* 4. Total Weight & Instructions */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                     <Input label={t('pickupTotalWeight' as any) || "Total Weight"} value={formData.shipMethod === 'package' ? `${totalPackageWeight.toFixed(3)} KG` : `${totalInvoiceWeight.toFixed(3)} KG`} disabled />
-                     <Input label={t('pickupInstructions' as any) || "Instructions for the courier"} value={formData.pickup.instructions} onChange={v => updateSection('pickup', { instructions: v })} />
+                    <Input label={t('pickupTotalWeight' as any) || "Total Weight"} value={formData.shipMethod === 'package' ? `${totalPackageWeight.toFixed(3)} KG` : `${totalInvoiceWeight.toFixed(3)} KG`} disabled />
+                    <Input label={t('pickupInstructions' as any) || "Instructions for the courier"} value={formData.pickup.instructions} onChange={v => updateSection('pickup', { instructions: v })} />
                   </div>
 
                   {/* 5. Pickup Address Section */}
@@ -1850,8 +1856,8 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                         <MapPin className="w-5 h-5 text-dhl-red" /> {t('pickupAddress' as any) || "Pickup Address"}
                       </h4>
                       {!isEditingPickupAddress ? (
-                        <button 
-                          type="button" 
+                        <button
+                          type="button"
                           onClick={() => {
                             setTempPickupAddress(formData.pickup.address);
                             setIsEditingPickupAddress(true);
@@ -1862,7 +1868,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                         </button>
                       ) : (
                         <div className="flex gap-4">
-                          <button 
+                          <button
                             onClick={() => {
                               updateSection('pickup', { address: tempPickupAddress });
                               setIsEditingPickupAddress(false);
@@ -1871,7 +1877,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                           >
                             Save
                           </button>
-                          <button 
+                          <button
                             onClick={() => setIsEditingPickupAddress(false)}
                             className="text-xs font-black text-gray-400 uppercase hover:text-gray-500 font-bold"
                           >
@@ -1880,36 +1886,36 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                         </div>
                       )}
                     </div>
-                    
+
                     {isEditingPickupAddress ? (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in duration-300">
-                        <Input label="Name" value={tempPickupAddress.name} onChange={v => setTempPickupAddress({...tempPickupAddress, name: v})} required />
-                        <Input label="Company" value={tempPickupAddress.company} onChange={v => setTempPickupAddress({...tempPickupAddress, company: v})} required />
+                        <Input label="Name" value={tempPickupAddress.name} onChange={v => setTempPickupAddress({ ...tempPickupAddress, name: v })} required />
+                        <Input label="Company" value={tempPickupAddress.company} onChange={v => setTempPickupAddress({ ...tempPickupAddress, company: v })} required />
                         <div className="sm:col-span-2">
-                          <Input label="Address 1" value={tempPickupAddress.address1} onChange={v => setTempPickupAddress({...tempPickupAddress, address1: v})} required />
+                          <Input label="Address 1" value={tempPickupAddress.address1} onChange={v => setTempPickupAddress({ ...tempPickupAddress, address1: v })} required />
                         </div>
-                        <Input label="Address 2" value={tempPickupAddress.address2} onChange={v => setTempPickupAddress({...tempPickupAddress, address2: v})} />
-                        <Input label="Address 3" value={tempPickupAddress.address3} onChange={v => setTempPickupAddress({...tempPickupAddress, address3: v})} />
-                        <Input label="City" value={tempPickupAddress.city} onChange={v => setTempPickupAddress({...tempPickupAddress, city: v})} required />
-                        <Input label="Postal Code" value={tempPickupAddress.postalCode} onChange={v => setTempPickupAddress({...tempPickupAddress, postalCode: v})} required />
-                        <Input label="Phone" value={tempPickupAddress.phone} onChange={v => setTempPickupAddress({...tempPickupAddress, phone: v})} required />
+                        <Input label="Address 2" value={tempPickupAddress.address2} onChange={v => setTempPickupAddress({ ...tempPickupAddress, address2: v })} />
+                        <Input label="Address 3" value={tempPickupAddress.address3} onChange={v => setTempPickupAddress({ ...tempPickupAddress, address3: v })} />
+                        <Input label="City" value={tempPickupAddress.city} onChange={v => setTempPickupAddress({ ...tempPickupAddress, city: v })} required />
+                        <Input label="Postal Code" value={tempPickupAddress.postalCode} onChange={v => setTempPickupAddress({ ...tempPickupAddress, postalCode: v })} required />
+                        <Input label="Phone" value={tempPickupAddress.phone} onChange={v => setTempPickupAddress({ ...tempPickupAddress, phone: v })} required />
                       </div>
                     ) : (
                       <div className="space-y-3 animate-in fade-in duration-300 py-2">
-                         <p className="font-black italic text-gray-900 dark:text-white text-lg uppercase tracking-tight">
-                           {formData.pickup.address.name}, {formData.pickup.address.company}
-                         </p>
-                         <p className="text-sm font-bold text-gray-500 leading-relaxed">
+                        <p className="font-black italic text-gray-900 dark:text-white text-lg uppercase tracking-tight">
+                          {formData.pickup.address.name}, {formData.pickup.address.company}
+                        </p>
+                        <p className="text-sm font-bold text-gray-500 leading-relaxed">
                           {formData.pickup.address.address1}
                           {formData.pickup.address.address2 && <>, {formData.pickup.address.address2}</>}
                           {formData.pickup.address.address3 && <>, {formData.pickup.address.address3}</>}
-                         </p>
-                         <p className="text-sm font-bold text-gray-900 dark:text-white tracking-widest uppercase">
+                        </p>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white tracking-widest uppercase">
                           {formData.pickup.address.city}, {formData.pickup.address.postalCode}
-                         </p>
-                         <p className="text-sm font-black text-dhl-red italic">
-                           Tel: {formData.pickup.address.phone}
-                         </p>
+                        </p>
+                        <p className="text-sm font-black text-dhl-red italic">
+                          Tel: {formData.pickup.address.phone}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -1931,10 +1937,10 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
             <div className="card space-y-6 relative overflow-hidden">
               <div className="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-4">
                 <h3 className="text-xl font-bold uppercase tracking-tight flex items-center gap-2">
-                   <ClipboardList className="w-6 h-6 text-dhl-red" /> {t('summary')}
+                  <ClipboardList className="w-6 h-6 text-dhl-red" /> {t('summary')}
                 </h3>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setCurrentStep(1)}
                   className="text-xs font-black text-dhl-red uppercase hover:underline italic"
                 >
@@ -1990,26 +1996,26 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                     <p className="break-words"><strong>{t('shipmentDate' as any)}:</strong> {new Date(formData.shipDate).toLocaleDateString(language === 'th' ? 'th-TH' : 'en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                     <p className="break-words"><strong>Type:</strong> {formData.shipMethod === 'document' ? t('document' as any) : t('package' as any)}</p>
                     <p className="break-words"><strong>Reference:</strong> {formData.shipmentReference || 'N/A'}</p>
-                    
+
                     {formData.shipMethod === 'document' ? (
                       <p className="break-words"><strong>Description:</strong> {formData.documentDescription || 'Documents'}</p>
                     ) : (
                       <>
                         <p className="break-words"><strong>Insurance:</strong> {formData.insurance?.required ? `${formData.insurance.value} THB` : 'No'}</p>
                         <div className="mt-4 space-y-4">
-                           {formData.invoice.items.map((it, idx) => (
-                             <div key={idx} className="border-t border-gray-200 dark:border-gray-700 pt-3">
-                                <p className="font-black text-xs text-gray-400 uppercase tracking-tighter mb-1">Item #{idx + 1}</p>
-                                <p className="break-words text-gray-900 dark:text-white font-black italic uppercase">
-                                  {it.description || 'Item'}
-                                </p>
-                                <div className="flex gap-4 mt-1 text-xs text-gray-500">
-                                   <span>Qty: {it.quantity}</span>
-                                   <span>Weight: {it.weight.toFixed(3)} KG</span>
-                                   <span className="text-dhl-red">Value: {it.value.toLocaleString()} THB</span>
-                                </div>
-                             </div>
-                           ))}
+                          {formData.invoice.items.map((it, idx) => (
+                            <div key={idx} className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                              <p className="font-black text-xs text-gray-400 uppercase tracking-tighter mb-1">Item #{idx + 1}</p>
+                              <p className="break-words text-gray-900 dark:text-white font-black italic uppercase">
+                                {it.description || 'Item'}
+                              </p>
+                              <div className="flex gap-4 mt-1 text-xs text-gray-500">
+                                <span>Qty: {it.quantity}</span>
+                                <span>Weight: {it.weight.toFixed(3)} KG</span>
+                                <span className="text-dhl-red">Value: {it.value.toLocaleString()} THB</span>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </>
                     )}
@@ -2059,29 +2065,29 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
               {/* Print Size Selection - Exact Parity with ship.html print-options-container */}
               <div className="p-6 border-2 border-dhl-yellow/30 rounded-3xl bg-dhl-yellow/10 dark:bg-gray-800/10 space-y-6 shadow-inner">
                 <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-tighter flex items-center gap-2" data-i18n="selectPrintSize">
-                   <Printer className="w-6 h-6 text-dhl-red" /> {t('selectPrintSize' as any) || "กรุณาเลือกขนาดในการปริ้น"}
+                  <Printer className="w-6 h-6 text-dhl-red" /> {t('selectPrintSize' as any) || "กรุณาเลือกขนาดในการปริ้น"}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <button 
-                      type="button" 
-                      onClick={() => setPrintSize('A4')}
-                      className={`p-5 rounded-2xl flex flex-col items-center justify-center text-center transition-all border-2 border-dashed ${printSize === 'A4' ? 'bg-white border-dhl-red shadow-xl shadow-red-500/10 scale-[1.02]' : 'bg-white/50 border-gray-200 dark:bg-gray-800/50 dark:border-gray-700 hover:border-gray-300'}`}
-                    >
-                        <div className="w-10 h-14 border-2 border-gray-300 rounded shadow-sm flex items-center justify-center bg-gray-50 mb-3">
-                           <span className="text-gray-400 font-bold text-[8px]">A4</span>
-                        </div>
-                        <span className="font-black tracking-tight uppercase text-sm" data-i18n="printA4">{t('printA4' as any) || "ขนาด A4"}</span>
-                    </button>
-                    <button 
-                      type="button" 
-                      onClick={() => setPrintSize('Label')}
-                      className={`p-5 rounded-2xl flex flex-col items-center justify-center text-center transition-all border-2 border-dashed ${printSize === 'Label' ? 'bg-white border-dhl-red shadow-xl shadow-red-500/10 scale-[1.02]' : 'bg-white/50 border-gray-200 dark:bg-gray-800/50 dark:border-gray-700 hover:border-gray-300'}`}
-                    >
-                        <div className="w-10 h-16 border-2 border-gray-300 rounded shadow-sm flex items-center justify-center bg-gray-50 mb-3">
-                          <span className="text-gray-400 font-bold text-[8px]">8x4"</span>
-                        </div>
-                        <span className="font-black tracking-tight uppercase text-sm" data-i18n="printLabel">{t('printLabel' as any) || "ขนาด Label 8x4 Inch"}</span>
-                    </button>
+                  <button
+                    type="button"
+                    onClick={() => setPrintSize('A4')}
+                    className={`p-5 rounded-2xl flex flex-col items-center justify-center text-center transition-all border-2 border-dashed ${printSize === 'A4' ? 'bg-white border-dhl-red shadow-xl shadow-red-500/10 scale-[1.02]' : 'bg-white/50 border-gray-200 dark:bg-gray-800/50 dark:border-gray-700 hover:border-gray-300'}`}
+                  >
+                    <div className="w-10 h-14 border-2 border-gray-300 rounded shadow-sm flex items-center justify-center bg-gray-50 mb-3">
+                      <span className="text-gray-400 font-bold text-[8px]">A4</span>
+                    </div>
+                    <span className="font-black tracking-tight uppercase text-sm" data-i18n="printA4">{t('printA4' as any) || "ขนาด A4"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPrintSize('Label')}
+                    className={`p-5 rounded-2xl flex flex-col items-center justify-center text-center transition-all border-2 border-dashed ${printSize === 'Label' ? 'bg-white border-dhl-red shadow-xl shadow-red-500/10 scale-[1.02]' : 'bg-white/50 border-gray-200 dark:bg-gray-800/50 dark:border-gray-700 hover:border-gray-300'}`}
+                  >
+                    <div className="w-10 h-16 border-2 border-gray-300 rounded shadow-sm flex items-center justify-center bg-gray-50 mb-3">
+                      <span className="text-gray-400 font-bold text-[8px]">8x4"</span>
+                    </div>
+                    <span className="font-black tracking-tight uppercase text-sm" data-i18n="printLabel">{t('printLabel' as any) || "ขนาด Label 8x4 Inch"}</span>
+                  </button>
                 </div>
                 {showValidationErrors && !printSize && (
                   <p className="text-center text-xs font-black text-dhl-red italic animate-bounce uppercase tracking-widest">{t('selectPrintSizeError' as any) || "Please select a print size before creating the shipment"}</p>
