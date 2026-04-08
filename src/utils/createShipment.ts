@@ -7,7 +7,6 @@ export const buildShipmentPayload = (formData: any, isTestEnvironment: boolean =
     const isPickupRequested = pickup.required;
     const createInvoiceRequested = invoice.items.length > 0;
     const receiverPaysTaxes = payment.dutiesRole === 'receiver';
-    const isInsuranceRequested = false; // Add to UI if needed
     const isDocUploadRequested = invoice.uploadedDocs && invoice.uploadedDocs.length > 0;
 
     let payload: any = {};
@@ -99,6 +98,22 @@ export const buildShipmentPayload = (formData: any, isTestEnvironment: boolean =
         });
     }
 
+    const isInsuranceRequested = formData.insurance && formData.insurance.required;
+    const insuranceValue = formData.insurance && formData.insurance.value ? parseFloat(formData.insurance.value) : 0;
+    const insuranceCurrency = invoice.currency || 'THB';
+
+    if (isInsuranceRequested) {
+        if (isDocument) {
+            valueAddedServices.push({ serviceCode: "IB" });
+        } else if (isPackage) {
+            valueAddedServices.push({
+                serviceCode: "II",
+                value: insuranceValue,
+                currency: insuranceCurrency
+            });
+        }
+    }
+
     if (isPackage) {
         if (packages.length > 0 && packages[0].description) {
             payload.content.description = packages.length > 1 ? "Multiple Items" : packages[0].description;
@@ -108,12 +123,17 @@ export const buildShipmentPayload = (formData: any, isTestEnvironment: boolean =
 
         payload.content.incoterm = payment.incoterm || "DAP";
         
-        // Calculate Total Value
-        let totalValue = invoice.items.reduce((sum: number, item: any) => sum + (item.value * item.quantity), 0);
-        let currency = invoice.items.length > 0 ? invoice.items[0].currency : 'THB';
-        
-        payload.content.declaredValue = parseFloat(totalValue.toFixed(3));
-        payload.content.declaredValueCurrency = currency;
+        // Calculate Declared Value
+        if (isInsuranceRequested && insuranceValue > 0) {
+            payload.content.declaredValue = insuranceValue;
+            payload.content.declaredValueCurrency = insuranceCurrency;
+        } else {
+            let totalValue = invoice.items.reduce((sum: number, item: any) => sum + ((parseFloat(item.value) || 0) * (parseInt(item.quantity) || 0)), 0);
+            let currency = invoice.currency || 'THB';
+            
+            payload.content.declaredValue = parseFloat(totalValue.toFixed(3));
+            payload.content.declaredValueCurrency = currency;
+        }
 
         payload.content.exportDeclaration = {
             lineItems: invoice.items.map((item: any, index: number) => {
