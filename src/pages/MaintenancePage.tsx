@@ -30,7 +30,7 @@ export const MaintenancePage: React.FC = () => {
             alt="Service Status" 
             className="mx-auto h-32 w-auto drop-shadow-lg"
             onError={(e) => {
-              (e.target as HTMLImageElement).src = 'https://placehold.co/128x128/d40511/FFFFFF?text=Maintenance';
+              (e.target as HTMLImageElement).style.display = 'none';
             }}
           />
         </div>
