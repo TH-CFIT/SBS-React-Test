@@ -938,10 +938,12 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
       const minStart = getMinReadyTime();
       const currentStart = toMinutes(formData.pickup.readyTime);
       if (currentStart < minStart) {
-        setShowValidationErrors(true);
-        setValidationMessage(`Pickup Ready Time is invalid - the earliest available time for ${formData.shipDate} is ${formatTime(minStart)}`);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        return;
+        // Auto-correct instead of showing error
+        const newReady = toTimeString(minStart);
+        const newClose = toTimeString(Math.min(1080, minStart + 180));
+        updateSection('pickup', { readyTime: newReady, closeTime: newClose });
+        formData.pickup.readyTime = newReady;
+        formData.pickup.closeTime = newClose;
       }
     }
 
@@ -1307,7 +1309,6 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
               data={formData.receiver}
               onChange={d => updateSection('receiver', d)}
               countries={countries}
-              bgClass="bg-yellow-50/30"
               showError={showValidationErrors}
               requiredEmail={false}
             />
@@ -1655,7 +1656,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                   newBilling = newShipper;
                 }
                 updateSection('payment', { shipperAccount: newShipper, billingAccount: newBilling });
-              }} required ruleKey="accountNumber" inputMode="numeric" pattern="[0-9]*" />
+              }} required ruleKey="accountNumber" inputMode="numeric" pattern="[0-9]*" placeholder="DHL Account Number" />
 
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
@@ -1666,7 +1667,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                   <label htmlFor="use-shipper-for-billing" className="text-sm font-bold">{t('useShipperForBilling')}</label>
                 </div>
                 {!formData.payment.useShipperForBilling && (
-                  <Input label={t('billingAccount')} value={formData.payment.billingAccount} onChange={v => updateSection('payment', { billingAccount: v })} required ruleKey="accountNumber" inputMode="numeric" pattern="[0-9]*" />
+                  <Input label={t('billingAccount')} value={formData.payment.billingAccount} onChange={v => updateSection('payment', { billingAccount: v })} required ruleKey="accountNumber" inputMode="numeric" pattern="[0-9]*" placeholder="DHL Account Number" />
                 )}
               </div>
 
@@ -1682,7 +1683,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                         <span className="text-sm font-bold whitespace-nowrap">{t('receiverWillPay')}</span>
                       </label>
                       <div className="flex-grow">
-                        <Input label="" value={formData.payment.dutiesAccount} onChange={v => updateSection('payment', { dutiesAccount: v })} required={formData.payment.dutiesRole !== 'receiver'} ruleKey="accountNumber" disabled={formData.payment.dutiesRole === 'receiver'} inputMode="numeric" pattern="[0-9]*" placeholder="Account Number" />
+                        <Input label="" value={formData.payment.dutiesAccount} onChange={v => updateSection('payment', { dutiesAccount: v })} required={formData.payment.dutiesRole !== 'receiver'} ruleKey="accountNumber" disabled={formData.payment.dutiesRole === 'receiver'} inputMode="numeric" pattern="[0-9]*" placeholder="DHL Account Number" />
                       </div>
                     </div>
                   </div>

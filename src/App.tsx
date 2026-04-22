@@ -86,24 +86,28 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen font-sans selection:bg-dhl-yellow selection:text-dhl-red">
-      <Header onNavigateHome={() => handleNavigateHome()} onClearShipper={handleClearShipper} />
-      
-      <main className="flex-grow container mx-auto px-6 py-6 md:py-12 lg:px-20 max-w-7xl">
-        {renderPage()}
-      </main>
+    <div className="relative min-h-screen">
+      <div className="fixed inset-0 z-[-1] bg-cover bg-center blur-xl opacity-70 scale-100" style={{ backgroundImage: "url('/SBS_Background.jpg')" }} />
+      <div className="fixed inset-0 z-[-1] bg-white/60 dark:bg-gray-200/95 pointer-events-none" />
+      <div className="flex flex-col min-h-screen font-sans selection:bg-dhl-yellow selection:text-dhl-red">
+        <Header onNavigateHome={() => handleNavigateHome()} onClearShipper={handleClearShipper} />
+        
+        <main className="flex-grow container mx-auto px-6 py-6 md:py-12 lg:px-20 max-w-7xl">
+          {renderPage()}
+        </main>
 
-      <Footer />
+        <Footer />
 
-      <TermsModal 
-        isOpen={isTermsModalOpen}
-        onClose={() => setIsTermsModalOpen(false)}
-        onAccept={() => {
-          setConsentAccepted(true);
-          setIsTermsModalOpen(false);
-          sessionStorage.setItem('termsAccepted', 'true');
-        }}
-      />
+        <TermsModal 
+          isOpen={isTermsModalOpen}
+          onClose={() => setIsTermsModalOpen(false)}
+          onAccept={() => {
+            setConsentAccepted(true);
+            setIsTermsModalOpen(false);
+            sessionStorage.setItem('termsAccepted', 'true');
+          }}
+        />
+      </div>
     </div>
   );
 };
