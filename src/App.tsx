@@ -6,16 +6,37 @@ import { TermsModal } from './components/TermsModal';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { ShipPage } from './pages/ShipPage';
 import { ConfirmationPage } from './pages/ConfirmationPage';
+import { MaintenancePage } from './pages/MaintenancePage';
 import { translations } from './translations';
 
-type Page = 'home' | 'ship' | 'confirmation';
+type Page = 'home' | 'ship' | 'confirmation' | 'maintenance';
 
 const AppContent: React.FC = () => {
   const { language, t } = useLanguage();
   const [activePage, setActivePage] = useState<Page>('home');
+  const [isSuspended, setIsSuspended] = useState<boolean | null>(null);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [shipmentResponse, setShipmentResponse] = useState<any>(null);
+
+  useEffect(() => {
+    const checkConfig = async () => {
+      try {
+        const res = await fetch('/api/config');
+        const data = await res.json();
+        if (data.production_mode === false) {
+          setIsSuspended(true);
+          setActivePage('maintenance');
+        } else {
+          setIsSuspended(false);
+        }
+      } catch (err) {
+        console.error('Failed to fetch config:', err);
+        setIsSuspended(false);
+      }
+    };
+    checkConfig();
+  }, []);
 
   useEffect(() => {
     if (!sessionStorage.getItem('isRefreshed')) {
@@ -68,11 +89,25 @@ const AppContent: React.FC = () => {
   };
 
   const renderPage = () => {
+    if (isSuspended === null) {
+      return (
+        <div className="flex items-center justify-center min-h-[40vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dhl-red"></div>
+        </div>
+      );
+    }
+
+    if (isSuspended) {
+      return <MaintenancePage />;
+    }
+
     switch (activePage) {
       case 'ship':
         return <ShipPage onFinish={handleFinishShipment} onBack={() => handleNavigateHome()} />;
       case 'confirmation':
         return <ConfirmationPage response={shipmentResponse} onNewShipment={() => setActivePage('ship')} onBackHome={() => handleNavigateHome()} />;
+      case 'maintenance':
+        return <MaintenancePage />;
       default:
         return (
           <Hero 

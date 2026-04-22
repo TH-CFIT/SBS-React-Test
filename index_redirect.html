@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+	<script>
+        if (!sessionStorage.getItem('isRefreshed')) {
+            sessionStorage.setItem('isRefreshed', 'true');
+            location.reload(true);
+        }
+    </script>
+    <meta charset="UTF-8">	
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shipment Creation Backup Solution - Back to normal</title>
+	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="DBS_Icon2.jpg" type="image/jpg">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .language-dropdown {
+            position: absolute;
+            right: 0;
+            margin-top: 0.5rem;
+            width: 7rem;
+            background-color: white;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+            z-index: 20;
+        }
+        .dark-mode .language-dropdown {
+            background-color: #374151;
+            border-color: #4b5563;
+        }
+        .dark-mode .language-dropdown a:hover {
+            background-color: #4b5563;
+        }
+    </style>
+</head>
+<body class="with-faded-bg flex flex-col min-h-screen">
+
+    <header class="bg-white shadow-md py-4 px-6 md:px-10 flex justify-between items-center relative z-10 rounded-b-xl">
+        <a href="index.html" class="flex items-center"><span class="text-4xl font-bold text-red-600">Shipment Creation</span><span class="ml-2 text-xl font-semibold text-gray-800 sm:block">Backup Solution</span></a>
+        <nav id="desktop-utilities-nav" class="flex items-center space-x-2 sm:space-x-4">
+            <div class="relative">
+                <button id="language-toggle-button" class="utility-button px-4 py-2 flex items-center gap-2"><span id="current-language-display"></span><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></button>
+                <div id="language-dropdown" class="language-dropdown hidden">
+                    <a href="#" class="block px-4 py-2 text-sm" data-lang="th">ภาษาไทย</a>
+                    <a href="#" class="block px-4 py-2 text-sm" data-lang="en">English</a>
+                </div>
+            </div>
+            <button id="theme-toggle" class="utility-button">
+                <svg id="theme-icon-light" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <svg id="theme-icon-dark" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            </button>
+        </nav>
+    </header>
+
+    <main class="flex-grow flex items-center justify-center p-4">
+        <section id="maintenance-page-content" class="bg-white p-8 rounded-lg shadow-xl text-center max-w-lg w-full card">
+            
+            <img src="Server.jpg"
+                 onerror="this.onerror=null;this.src='https://placehold.co/96x96/28a745/FFFFFF?text=OK';"
+                 alt="Service Restored"
+                 class="mx-auto h-24 w-auto mb-6">
+
+            <h1 class="text-4xl font-bold text-red-700 mb-4" data-i18n="backToNormalTitle"></h1>
+            <p class="text-md text-gray-600 mb-4">
+                <span data-i18n="backToNormalBody1"></span>
+                <span id="countdown" class="font-bold">10</span>
+                <span data-i18n="backToNormalBody2"></span>
+            </p>
+            <p class="text-md text-gray-600">
+                <span data-i18n="backToNormalBody3"></span>
+                <a href="https://mydhl.express.dhl/th/en/home.html#/getQuoteTab" class="text-blue-600 hover:underline">MyDHL+</a>
+            </p>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container mx-auto px-6 py-12">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div class="text-center md:text-left">
+                    <h3 class="font-semibold mb-4 uppercase" data-i18n="contactSupport"></h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" data-i18n-link="contactUs" target="_blank" class="text-sm" data-i18n="contactUs"></a></li>
+                    </ul>
+                </div>
+
+                <div class="text-center md:text-left">
+                    <h3 class="font-semibold mb-4 uppercase" data-i18n="legal"></h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" data-i18n-link="termsOfUse" target="_blank" class="text-sm" data-i18n="termsOfUse"></a></li>
+                        <li><a href="#" data-i18n-link="privacyNotice" target="_blank" class="text-sm" data-i18n="privacyNotice"></a></li>
+                        <li><a href="#" data-i18n-link="fraudAwareness" target="_blank" class="text-sm" data-i18n="fraudAwareness"></a></li>
+                        <li><a href="#" data-i18n-link="legalNotice" target="_blank" class="text-sm" data-i18n="legalNotice"></a></li>
+                    </ul>
+                </div>
+
+                <div class="hidden md:block"></div>
+
+                <div class="col-span-2 md:col-span-1 text-center md:text-left flex flex-col items-center md:items-start">
+                    <img src="DHL_logo_rgb_black.svg" alt="DHL Group Logo" class="h-6 mb-5">
+                    <ul class="space-y-2">
+                        <li><a href="#" data-i18n-link="dhlExpress" target="_blank" class="text-sm" data-i18n="dhlExpress"></a></li>
+                        <li><a href="#" data-i18n-link="aboutDhl" target="_blank" class="text-sm" data-i18n="aboutDhl"></a></li>
+                        <li><a href="#" data-i18n-link="press" target="_blank" class="text-sm" data-i18n="press"></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t mt-8 pt-6 text-center text-sm">
+                &copy; <span id="current-year"></span> DHL Express. <span data-i18n="allRightsReserved"></span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            let translations;
+            try {
+                const response = await fetch('data/translations.json');
+                if (!response.ok) throw new Error('Failed to load translations');
+                translations = await response.json();
+            } catch (error) {
+                console.error("Fatal Error:", error);
+                translations = {
+                    'en': { 'backToNormalTitle': 'MyDHL+ System is Back Online' },
+                    'th': { 'backToNormalTitle': 'ขณะนี้ระบบ MyDHL+ กลับมาพร้อมให้บริการแล้ว' }
+                };
+            }
+            
+            let currentLanguage = localStorage.getItem('language') || 'en';
+
+            function getTranslatedText(key) {
+                return translations[currentLanguage]?.[key] || key;
+            }
+
+            function updateContentLanguage() {
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    el.textContent = getTranslatedText(key);
+                });
+
+                document.querySelectorAll('[data-i18n-link]').forEach(el => {
+                    const key = el.getAttribute('data-i18n-link');
+                    const links = translations[currentLanguage]?.links;
+                    if (links && links[key]) {
+                        el.href = links[key];
+                    }
+                });
+                document.getElementById('current-language-display').textContent = currentLanguage.toUpperCase();
+            }
+
+            // Setup current year in footer
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+
+            // Language switch logic
+            const langToggleButton = document.getElementById('language-toggle-button');
+            const langDropdown = document.getElementById('language-dropdown');
+            langToggleButton.addEventListener('click', () => langDropdown.classList.toggle('hidden'));
+            document.querySelectorAll('[data-lang]').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    currentLanguage = e.target.dataset.lang;
+                    localStorage.setItem('language', currentLanguage);
+                    updateContentLanguage();
+                    langDropdown.classList.add('hidden');
+                });
+            });
+            document.addEventListener('click', (e) => { 
+                if (!langToggleButton.contains(e.target) && !langDropdown.contains(e.target)) { 
+                    langDropdown.classList.add('hidden'); 
+                } 
+            });
+
+
+            // Theme toggle logic
+            const themeToggle = document.getElementById('theme-toggle');
+            const lightIcon = document.getElementById('theme-icon-light');
+            const darkIcon = document.getElementById('theme-icon-dark');
+            const enableDarkMode = () => { document.body.classList.add('dark-mode'); localStorage.setItem('theme', 'dark'); lightIcon.classList.add('hidden'); darkIcon.classList.remove('hidden'); };
+            const disableDarkMode = () => { document.body.classList.remove('dark-mode'); localStorage.setItem('theme', 'light'); lightIcon.classList.remove('hidden'); darkIcon.classList.add('hidden'); };
+            themeToggle.addEventListener('click', () => { document.body.classList.contains('dark-mode') ? disableDarkMode() : enableDarkMode(); });
+            
+            if (localStorage.getItem('theme') === 'dark') {
+                enableDarkMode();
+            } else {
+                disableDarkMode();
+            }
+
+            // Initial content update
+            updateContentLanguage();
+
+            // Countdown and Redirect Logic
+            let countdown = 10;
+            const countdownElement = document.getElementById('countdown');
+            const redirectUrl = 'https://mydhl.express.dhl/th/en/home.html#/getQuoteTab';
+
+            const interval = setInterval(() => {
+                countdown--;
+                countdownElement.textContent = countdown;
+                if (countdown <= 0) {
+                    clearInterval(interval);
+                    window.location.href = redirectUrl;
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
