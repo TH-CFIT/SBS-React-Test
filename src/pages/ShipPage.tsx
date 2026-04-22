@@ -501,7 +501,7 @@ const Input = ({ label, value, onChange, onBlur, type = 'text', required, disabl
           maxLength={maxLength}
           min={min}
           max={max}
-          step={type === 'number' ? '1' : undefined}
+          step={type === 'number' ? 'any' : undefined}
           placeholder={placeholder}
           inputMode={inputMode}
           pattern={pattern}
@@ -1434,7 +1434,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                                 <div className="space-y-1.5 flex-grow">
                                   <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Value (Per Item)</label>
                                   <div className="flex">
-                                    <input type="number" step="1" min={appConfig.validationRules.lineItem.value.min.toString()} value={item.value} onChange={e => { const n = [...formData.invoice.items]; n[i].value = parseFloat(e.target.value) || 0; setFormData(p => { const newState = { ...p, invoice: { ...p.invoice, items: n } }; if (p.insurance.required) { const totalValue = n.reduce((s, a) => s + ((a.value || 0) * (a.quantity || 1)), 0); newState.insurance = { required: true, value: totalValue.toFixed(2) }; } return newState; }) }} className="w-full p-4 rounded-l-xl border-2 border-r-0 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-dhl-yellow outline-none font-bold hover:border-gray-200 transition-all border-gray-50 dark:border-gray-700" />
+                                    <input type="number" step="any" min={appConfig.validationRules.lineItem.value.min.toString()} value={item.value} onChange={e => { const n = [...formData.invoice.items]; n[i].value = parseFloat(e.target.value) || 0; setFormData(p => { const newState = { ...p, invoice: { ...p.invoice, items: n } }; if (p.insurance.required) { const totalValue = n.reduce((s, a) => s + ((a.value || 0) * (a.quantity || 1)), 0); newState.insurance = { required: true, value: totalValue.toFixed(2) }; } return newState; }) }} className="w-full p-4 rounded-l-xl border-2 border-r-0 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-dhl-yellow outline-none font-bold hover:border-gray-200 transition-all border-gray-50 dark:border-gray-700" />
                                     <select value={formData.invoice.currency} onChange={e => { setFormData(p => ({ ...p, invoice: { ...p.invoice, currency: e.target.value } })) }} className="p-4 rounded-r-xl border-2 bg-gray-100 dark:bg-gray-700 focus:ring-2 focus:ring-dhl-yellow outline-none font-bold transition-all border-gray-50 dark:border-gray-600 min-w-[90px]">
                                       {(currenciesData as string[]).map(c => (<option key={c} value={c}>{c}</option>))}
                                     </select>
