@@ -551,9 +551,9 @@ const SummarySection = ({ title, icon: Icon, children }: any) => (
 );
 
 const SummaryField = ({ label, value }: any) => (
-  <div className="flex justify-between items-end border-b border-gray-100 dark:border-gray-800 pb-2">
-    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{label}</span>
-    <span className="text-sm font-black text-gray-900 dark:text-white italic">{value}</span>
+  <div className="flex justify-between items-end border-b border-gray-100 dark:border-gray-800 pb-2 gap-4">
+    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex-shrink-0">{label}</span>
+    <span className="text-sm font-black text-gray-900 dark:text-white italic text-right break-words min-w-0 flex-1">{value}</span>
   </div>
 );
 
@@ -1945,9 +1945,10 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
 
                   {/* 5. Pickup Address Section */}
                   <div className="p-6 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800 hover:border-gray-200 transition-colors">
-                    <div className="flex justify-between items-center mb-4 border-b border-gray-100 dark:border-gray-800 pb-4">
-                      <h4 className="font-bold text-gray-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
-                        <MapPin className="w-5 h-5 text-dhl-red" /> {t('pickupAddress' as any) || "Pickup Address"}
+                    <div className="flex justify-between items-start sm:items-center mb-4 border-b border-gray-100 dark:border-gray-800 pb-4 gap-4 flex-wrap sm:flex-nowrap">
+                      <h4 className="font-bold text-gray-900 dark:text-white uppercase tracking-tight flex items-start sm:items-center gap-2 break-words min-w-0 flex-1">
+                        <MapPin className="w-5 h-5 text-dhl-red flex-shrink-0 mt-0.5 sm:mt-0" /> 
+                        <span className="break-words">{t('pickupAddress' as any) || "Pickup Address"}</span>
                       </h4>
                       {!isEditingPickupAddress ? (
                         <button
@@ -2038,15 +2039,15 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                       </div>
                     ) : (
                       <div className="space-y-3 animate-in fade-in duration-300 py-2">
-                        <p className="font-black italic text-gray-900 dark:text-white text-lg uppercase tracking-tight">
+                        <p className="font-black italic text-gray-900 dark:text-white text-lg uppercase tracking-tight break-words">
                           {formData.pickup.address.name}, {formData.pickup.address.company}
                         </p>
-                        <p className="text-sm font-bold text-gray-500 leading-relaxed">
+                        <p className="text-sm font-bold text-gray-500 leading-relaxed break-words">
                           {formData.pickup.address.address1}
                           {formData.pickup.address.address2 && <>, {formData.pickup.address.address2}</>}
                           {formData.pickup.address.address3 && <>, {formData.pickup.address.address3}</>}
                         </p>
-                        <p className="text-sm font-bold text-gray-900 dark:text-white tracking-widest uppercase">
+                        <p className="text-sm font-bold text-gray-900 dark:text-white tracking-widest uppercase break-words">
                           {formData.pickup.address.city}, {formData.pickup.address.postalCode}
                         </p>
                         <p className="text-sm font-black text-dhl-red italic">
