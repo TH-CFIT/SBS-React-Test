@@ -473,7 +473,7 @@ const Input = ({ label, value, onChange, onBlur, type = 'text', required, disabl
     }
 
     if (isPhone) {
-      sanitized = sanitized.replace(/[^0-9]/g, '');
+      sanitized = sanitized.replace(/[^0-9+\-() ]/g, '');
     } else if (ruleKey === 'accountNumber') {
       sanitized = sanitized.replace(/[^0-9]/g, '');
     } else {
