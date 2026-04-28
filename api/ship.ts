@@ -7,12 +7,11 @@ const db = createPool({
 });
 
 const ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-    'https://viruzjoke.github.io',
     'https://thcfit.vercel.app',
     'https://thcfit-admin.vercel.app',
     'https://sbs-react.vercel.app',
-    'https://sbs-react-admin.vercel.app'
+    'https://sbs-react-admin.vercel.app',
+    'https://sbs-react-e2e.vercel.app'
 ];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -78,10 +77,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const responseBodyText = await shipmentResponse.text();
         let shipmentData: any;
-        
+
         try {
-             shipmentData = JSON.parse(responseBodyText);
-        } catch(e) {
+            shipmentData = JSON.parse(responseBodyText);
+        } catch (e) {
             console.error('DHL Shipment API Non-JSON Response:', responseBodyText);
             try {
                 const errorMessage = 'Failed to parse JSON response from DHL: ' + responseBodyText;
@@ -101,8 +100,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             } catch (dbError) {
                 console.error("Database logging failed for Non-JSON response:", dbError);
             }
-            return res.status(shipmentResponse.status || 500).json({ 
-                title: 'API Error', 
+            return res.status(shipmentResponse.status || 500).json({
+                title: 'API Error',
                 detail: 'Received an invalid response from the DHL server.',
                 response: responseBodyText
             });
@@ -187,7 +186,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         } catch (dbError) {
             console.error("Database logging failed for internal server error:", dbError);
         }
-        
+
         console.error('Error processing shipment request:', error);
         return res.status(500).json({
             detail: 'An unexpected error occurred on the server.'

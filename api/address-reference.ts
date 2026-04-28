@@ -2,12 +2,11 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import fetch from 'node-fetch';
 
 const ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-    'https://viruzjoke.github.io',
     'https://thcfit.vercel.app',
     'https://thcfit-admin.vercel.app',
     'https://sbs-react.vercel.app',
-    'https://sbs-react-admin.vercel.app'
+    'https://sbs-react-admin.vercel.app',
+    'https://sbs-react-e2e.vercel.app'
 ];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

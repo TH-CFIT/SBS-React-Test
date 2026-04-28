@@ -2,12 +2,11 @@ import { get } from '@vercel/edge-config';
 import { VercelRequest, VercelResponse } from '@vercel/node';
 
 const ALLOWED_ORIGINS = [
-  'http://localhost:5173',
-  'https://viruzjoke.github.io',
   'https://thcfit.vercel.app',
   'https://thcfit-admin.vercel.app',
   'https://sbs-react.vercel.app',
-  'https://sbs-react-admin.vercel.app'
+  'https://sbs-react-admin.vercel.app',
+  'https://sbs-react-e2e.vercel.app'
 ];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -30,9 +29,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const productionMode = await get('production_mode');
-    
-    return res.status(200).json({ 
-      production_mode: productionMode !== false 
+
+    return res.status(200).json({
+      production_mode: productionMode !== false
     });
   } catch (error) {
     console.error('Edge Config Error:', error);

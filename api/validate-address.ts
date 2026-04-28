@@ -2,12 +2,11 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import fetch from 'node-fetch';
 
 const ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-    'https://viruzjoke.github.io',
     'https://thcfit.vercel.app',
     'https://thcfit-admin.vercel.app',
     'https://sbs-react.vercel.app',
-    'https://sbs-react-admin.vercel.app'
+    'https://sbs-react-admin.vercel.app',
+    'https://sbs-react-e2e.vercel.app'
 ];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -15,7 +14,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (origin && ALLOWED_ORIGINS.includes(origin)) {
         res.setHeader('Access-Control-Allow-Origin', origin);
     }
-    
+
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -27,7 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         res.setHeader('Allow', ['GET']);
         return res.status(405).end(`Method ${req.method} Not Allowed`);
     }
-    
+
     const DHL_API_KEY = process.env.DHL_VALIDATE_ADDRESS_API_KEY;
     const DHL_API_ENDPOINT = 'https://wsbexpress.dhl.com/postalLocation/v1';
 
