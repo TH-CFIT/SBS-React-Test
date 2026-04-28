@@ -45,12 +45,13 @@ const transformCountryData = (apiResponse: any) => {
 
 const getFlagEmoji = (countryCode: string) => {
   if (!countryCode || countryCode.length !== 2) return '';
-  return `https://flagcdn.com/w40/${countryCode.toLowerCase()}.png`;
+  return `https://cdn.jsdelivr.net/gh/lipis/flag-icons@6.6.6/flags/4x3/${countryCode.toLowerCase()}.svg`;
 };
 
 const CountryFlag = ({ code, className = "w-5 h-3.5 object-cover rounded-sm" }: { code: string, className?: string }) => {
-  if (!code) return null;
-  return <img src={getFlagEmoji(code)} alt={code} className={className} />;
+  const [error, setError] = useState(false);
+  if (!code || error) return null;
+  return <img src={getFlagEmoji(code)} alt={code} className={className} onError={() => setError(true)} />;
 };
 
 const Combobox = ({
