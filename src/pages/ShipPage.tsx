@@ -1699,9 +1699,11 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                         }} className="w-5 h-5 text-dhl-red focus:ring-dhl-yellow border-gray-300 rounded" />
                         <span className="text-sm font-bold whitespace-nowrap">{t('receiverWillPay')}</span>
                       </label>
-                      <div className="flex-grow">
-                        <Input label="" value={formData.payment.dutiesAccount} onChange={v => updateSection('payment', { dutiesAccount: v })} required={formData.payment.dutiesRole !== 'receiver'} ruleKey="accountNumber" disabled={formData.payment.dutiesRole === 'receiver'} inputMode="numeric" pattern="[0-9]*" placeholder="DHL Account Number" />
-                      </div>
+                      {formData.payment.dutiesRole !== 'receiver' && (
+                        <div className="flex-grow">
+                          <Input label="" value={formData.payment.dutiesAccount} onChange={v => updateSection('payment', { dutiesAccount: v })} required ruleKey="accountNumber" inputMode="numeric" pattern="[0-9]*" placeholder="DHL Account Number" />
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1940,7 +1942,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                   {/* 4. Total Weight & Instructions */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <Input label={t('pickupTotalWeight' as any) || "Total Weight"} value={formData.shipMethod === 'package' ? `${totalPackageWeight.toFixed(3)} KG` : `${totalInvoiceWeight.toFixed(3)} KG`} disabled />
-                    <Input label={t('pickupInstructions' as any) || "Instructions for the courier"} value={formData.pickup.instructions} onChange={v => updateSection('pickup', { instructions: v })} />
+                    <Input label={t('pickupInstructions' as any) || "Instructions for the courier"} value={formData.pickup.instructions} onChange={v => updateSection('pickup', { instructions: v })} ruleKey="pickupInstructions" />
                   </div>
 
                   {/* 5. Pickup Address Section */}
