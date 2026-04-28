@@ -14,7 +14,10 @@ type Page = 'home' | 'ship' | 'confirmation' | 'maintenance';
 const AppContent: React.FC = () => {
   const { language, t } = useLanguage();
   const [activePage, setActivePage] = useState<Page>('home');
-  const [isSuspended, setIsSuspended] = useState<boolean | null>(null);
+  
+  // --- แก้ไขจุดที่ 1: เปลี่ยนจาก null เป็น false เพื่อไม่ให้ติดหน้า Loading นาน ---
+  const [isSuspended, setIsSuspended] = useState<boolean | null>(false); 
+  
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [shipmentResponse, setShipmentResponse] = useState<any>(null);
@@ -24,12 +27,19 @@ const AppContent: React.FC = () => {
       try {
         const res = await fetch('/api/config');
         const data = await res.json();
-        if (data.production_mode === false) {
+
+        // --- แก้ไขจุดที่ 2: คอมเมนต์ logic ที่จะเปลี่ยนเป็นโหมด Maintenance ออก ---
+        /* if (data.production_mode === false) {
           setIsSuspended(true);
           setActivePage('maintenance');
         } else {
           setIsSuspended(false);
         }
+        */
+        
+        // บังคับให้เป็น false เสมอเพื่อให้เข้าหน้าเว็บได้ปกติ
+        setIsSuspended(false); 
+
       } catch (err) {
         console.error('Failed to fetch config:', err);
         setIsSuspended(false);
