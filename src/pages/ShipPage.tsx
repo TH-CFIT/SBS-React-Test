@@ -782,7 +782,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
       shipperAccount: '',
       billingAccount: '',
       dutiesAccount: '',
-      incoterm: 'DDP',
+      incoterm: 'DAP',
       paymentRole: 'shipper',
       dutiesRole: 'receiver',
       useShipperForBilling: true
@@ -1695,7 +1695,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                     <div className="flex items-center gap-4">
                       <label className="flex items-center gap-2 cursor-pointer bg-gray-50 dark:bg-gray-700 p-4 rounded-xl border-2 border-gray-100 dark:border-gray-600 hover:border-dhl-yellow transition-all">
                         <input type="checkbox" id="receiver-pays-checkbox" checked={formData.payment.dutiesRole === 'receiver'} onChange={e => {
-                          updateSection('payment', { dutiesRole: e.target.checked ? 'receiver' : 'shipper', dutiesAccount: e.target.checked ? '' : formData.payment.dutiesAccount });
+                          updateSection('payment', { dutiesRole: e.target.checked ? 'receiver' : 'shipper', dutiesAccount: e.target.checked ? '' : formData.payment.dutiesAccount, incoterm: e.target.checked ? 'DAP' : 'DDP' });
                         }} className="w-5 h-5 text-dhl-red focus:ring-dhl-yellow border-gray-300 rounded" />
                         <span className="text-sm font-bold whitespace-nowrap">{t('receiverWillPay')}</span>
                       </label>
