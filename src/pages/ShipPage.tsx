@@ -221,7 +221,7 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
   const { t } = useLanguage();
   const [validationWarning, setValidationWarning] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeField, setActiveField] = useState<string | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
   const selectedCountry = countries.find((c: any) => (c.countryCode || c.code) === data.country);
@@ -277,8 +277,10 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
 
   const fetchSuggestions = useRef(
     debounce(async (value: string, type: string, country: string) => {
+      setActiveField(type);
       if (!country || value.length < 2) {
         setShowSuggestions(false);
+        setActiveField(null);
         return;
       }
 
@@ -311,16 +313,12 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
         const result = await response.json();
         const locations = result?.postalLocationList;
 
-        if (!locations || locations.length === 0) {
-          setShowSuggestions(false);
-          return;
-        }
-
         setSuggestions(locations);
         setShowSuggestions(true);
       } catch (error) {
         console.error('Error fetching address suggestions:', error);
         setShowSuggestions(false);
+        setActiveField(null);
       }
     }, 500)
   ).current;
@@ -338,6 +336,7 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
     });
 
     setShowSuggestions(false);
+    setActiveField(null);
     setValidationWarning(null);
   };
 
@@ -407,7 +406,7 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
             {showPostal && (
               <div className="relative">
                 <Input label={t('postalCode' as any)} value={data.postalCode} onChange={(v: any) => { onChange({ ...data, postalCode: v }); fetchSuggestions(v, 'postalCode', data.country); }} onBlur={validateAddress} required ruleKey="postalcode" showError={showError} />
-                {showSuggestions && suggestions.length > 0 && suggestions[0].postalCode && (
+                {showSuggestions && activeField === 'postalCode' && suggestions.length > 0 && (
                   <SuggestionsDropdown suggestions={suggestions} onSelect={handleSuggestionSelect} suggestionsRef={suggestionsRef} />
                 )}
               </div>
@@ -415,14 +414,14 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
             {showSuburb && (
               <div className="relative">
                 <Input label={t('suburb' as any)} value={data.suburb} onChange={(v: any) => { onChange({ ...data, suburb: v }); fetchSuggestions(v, 'suburb', data.country); }} onBlur={validateAddress} required ruleKey="suburb" showError={showError} />
-                {showSuggestions && suggestions.length > 0 && suggestions[0].cityDistrict && (
+                {showSuggestions && activeField === 'suburb' && suggestions.length > 0 && (
                   <SuggestionsDropdown suggestions={suggestions} onSelect={handleSuggestionSelect} suggestionsRef={suggestionsRef} />
                 )}
               </div>
             )}
             <div className="relative">
               <Input label={t('city' as any)} value={data.city} onChange={(v: any) => { onChange({ ...data, city: v }); fetchSuggestions(v, 'city', data.country); }} onBlur={validateAddress} required ruleKey="city" showError={showError} />
-              {showSuggestions && suggestions.length > 0 && (suggestions[0].cityName || suggestions[0].city) && !suggestions[0].postalCode && (
+              {showSuggestions && activeField === 'city' && suggestions.length > 0 && (
                 <SuggestionsDropdown suggestions={suggestions} onSelect={handleSuggestionSelect} suggestionsRef={suggestionsRef} />
               )}
             </div>
@@ -602,6 +601,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
   const [printSize, setPrintSize] = useState<'A4' | 'Label' | null>(null);
   const [pickupSuggestions, setPickupSuggestions] = useState<any[]>([]);
   const [showPickupSuggestions, setShowPickupSuggestions] = useState(false);
+  const [activePickupField, setActivePickupField] = useState<string | null>(null);
   const [pickupValidationWarning, setPickupValidationWarning] = useState<string | null>(null);
   const pickupSuggestionsRef = useRef<HTMLDivElement>(null);
 
@@ -641,8 +641,10 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
 
   const fetchPickupSuggestions = useRef(
     debounce(async (value: string, type: string, country: string) => {
+      setActivePickupField(type);
       if (!country || value.length < 2) {
         setShowPickupSuggestions(false);
+        setActivePickupField(null);
         return;
       }
       const params = new URLSearchParams({ countryCode: country });
@@ -654,14 +656,11 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
       try {
         const response = await fetch(`/api/validate-address?${params.toString()}`);
         const contentType = response.headers.get("content-type");
-        if (!response.ok || !contentType?.includes("application/json")) { setShowPickupSuggestions(false); return; }
-        const result = await response.json();
-        const locations = result?.postalLocationList;
-        if (!locations || locations.length === 0) { setShowPickupSuggestions(false); return; }
         setPickupSuggestions(locations);
         setShowPickupSuggestions(true);
       } catch (error) {
         setShowPickupSuggestions(false);
+        setActivePickupField(null);
       }
     }, 500)
   ).current;
@@ -673,6 +672,7 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
       city: loc.cityName || loc.city || tempPickupAddress.city,
     });
     setShowPickupSuggestions(false);
+    setActivePickupField(null);
     setPickupValidationWarning(null);
   };
 
@@ -2010,13 +2010,13 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="relative">
                               <Input label="City" value={tempPickupAddress.city} onChange={v => { setTempPickupAddress({ ...tempPickupAddress, city: v }); fetchPickupSuggestions(v, 'city', tempPickupAddress.country); }} onBlur={validatePickupAddress} required ruleKey="city" />
-                              {showPickupSuggestions && pickupSuggestions.length > 0 && (pickupSuggestions[0].cityName || pickupSuggestions[0].city) && !pickupSuggestions[0].postalCode && (
+                              {showPickupSuggestions && activePickupField === 'city' && pickupSuggestions.length > 0 && (
                                 <SuggestionsDropdown suggestions={pickupSuggestions} onSelect={handlePickupSuggestionSelect} suggestionsRef={pickupSuggestionsRef} />
                               )}
                             </div>
                             <div className="relative">
                               <Input label="Postal Code" value={tempPickupAddress.postalCode} onChange={v => { setTempPickupAddress({ ...tempPickupAddress, postalCode: v }); fetchPickupSuggestions(v, 'postalCode', tempPickupAddress.country); }} onBlur={validatePickupAddress} required ruleKey="postalcode" />
-                              {showPickupSuggestions && pickupSuggestions.length > 0 && pickupSuggestions[0].postalCode && (
+                              {showPickupSuggestions && activePickupField === 'postalCode' && pickupSuggestions.length > 0 && (
                                 <SuggestionsDropdown suggestions={pickupSuggestions} onSelect={handlePickupSuggestionSelect} suggestionsRef={pickupSuggestionsRef} />
                               )}
                             </div>
