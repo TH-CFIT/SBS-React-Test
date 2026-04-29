@@ -28,14 +28,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const DHL_API_KEY = process.env.DHL_VALIDATE_ADDRESS_API_KEY;
-    const DHL_API_ENDPOINT = 'https://wsbexpress.dhl.com/postalLocation/v1';
+    const DHL_API_ENDPOINT = 'https://xapi-g.api.dhl.com/postalLocation/v1';
 
     if (!DHL_API_KEY) {
         console.error('DHL_VALIDATE_ADDRESS_API_KEY is not set in environment variables.');
         return res.status(500).json({ error: 'Server configuration error: API Key is missing.' });
     }
 
-    const { countryCode, postalCode, city, countyName } = req.query;
+    const { countryCode, postalCode, city, countyName, maxResults } = req.query;
 
     if (!countryCode) {
         return res.status(400).json({ error: 'countryCode is a required parameter.' });
@@ -47,8 +47,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     try {
         const params = new URLSearchParams({
-            key: DHL_API_KEY as string,
             countryCode: countryCode as string,
+            maxResults: (maxResults as string) || '50',
         });
 
         if (postalCode) params.append('postalCode', postalCode as string);
@@ -57,7 +57,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const dhlApiUrl = `${DHL_API_ENDPOINT}?${params.toString()}`;
 
-        const apiResponse = await fetch(dhlApiUrl);
+        const apiResponse = await fetch(dhlApiUrl, {
+            headers: {
+                'x-api-key': DHL_API_KEY as string,
+            },
+        });
         const responseData = await apiResponse.json();
 
         if (!apiResponse.ok) {
