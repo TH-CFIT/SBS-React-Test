@@ -221,6 +221,7 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
   const { t } = useLanguage();
   const [validationWarning, setValidationWarning] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [activeField, setActiveField] = useState<string | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
@@ -656,7 +657,14 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
       try {
         const response = await fetch(`/api/validate-address?${params.toString()}`);
         const contentType = response.headers.get("content-type");
-        setPickupSuggestions(locations);
+        if (!response.ok || !contentType?.includes("application/json")) {
+          setShowPickupSuggestions(false);
+          setActivePickupField(null);
+          return;
+        }
+        const result = await response.json();
+        const locationsList = result?.postalLocationList;
+        setPickupSuggestions(locationsList || []);
         setShowPickupSuggestions(true);
       } catch (error) {
         setShowPickupSuggestions(false);
