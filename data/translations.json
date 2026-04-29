@@ -188,6 +188,8 @@
 		"backToNormalBody1": "ระบบกำลังนำท่านกลับสู่หน้าหลักของ MyDHL+ ใน",
 		"backToNormalBody2": "วินาที",
 		"backToNormalBody3": "หากท่านไม่ถูกเปลี่ยนเส้นทางโดยอัตโนมัติ กรุณาคลิกที่นี่ :",
+		"finalVerification": "การยืนยันขั้นตอนสุดท้าย",
+		"finalVerificationDesc": "การคลิก \"สร้างใบนำส่ง\" แสดงว่าคุณยืนยันว่าข้อมูลที่ให้ไว้ทั้งหมดถูกต้อง เนื่องข้อผิดพลาดในใบนำส่งสินค้าอาจทำให้เกิดความล่าช้าในการจัดส่งได้",
 		"links": {
 			"contactUs": "https://www.dhl.com/th-th/home/customer-service.html",
 			"termsOfUse": "https://www.dhl.com/th-th/home/footer/terms-of-use.html",
@@ -391,6 +393,8 @@
 		"backToNormalBody1": "You are being redirected to the MyDHL+ homepage in",
 		"backToNormalBody2": "Seconds",
 		"backToNormalBody3": "If you are not automatically redirected, please click here:",
+		"finalVerification": "Final Verification",
+		"finalVerificationDesc": "By clicking \"Create Shipment\", you verify that all provided information is accurate. Errors in shipping labels may result in delivery delays.",
 		"links": {
 			"contactUs": "https://www.dhl.com/th-en/home/customer-service.html",
 			"termsOfUse": "https://www.dhl.com/th-en/home/footer/terms-of-use.html",

@@ -48,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         const params = new URLSearchParams({
             countryCode: countryCode as string,
-            maxResults: (maxResults as string) || '50',
+            maxResults: (maxResults as string) || '20',
         });
 
         if (postalCode) params.append('postalCode', postalCode as string);

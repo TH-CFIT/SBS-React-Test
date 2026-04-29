@@ -2243,9 +2243,9 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                   <AlertCircle className="w-10 h-10 mx-auto" />
                 </div>
                 <div className="text-center md:text-left">
-                  <h4 className="text-xl font-black text-dhl-red uppercase italic tracking-tighter">Final Verification</h4>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mt-1 max-w-xl leading-relaxed">
-                    By clicking "Create Shipment", you verify that all provided information is accurate. Errors in shipping labels may result in delivery delays or additional charges.
+                  <h4 className="text-xl font-black text-dhl-red uppercase italic tracking-tighter" data-i18n="finalVerification">{t('finalVerification' as any) || "Final Verification"}</h4>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mt-1 max-w-xl leading-relaxed" data-i18n="finalVerificationDesc">
+                    {t('finalVerificationDesc' as any) || "By clicking \"Create Shipment\", you verify that all provided information is accurate. Errors in shipping labels may result in delivery delays or additional charges."}
                   </p>
                 </div>
               </div>
