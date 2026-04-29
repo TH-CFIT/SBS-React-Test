@@ -185,6 +185,37 @@ const Combobox = ({
   );
 };
 
+const SuggestionsDropdown = ({ suggestions, onSelect, suggestionsRef }: { suggestions: any[], onSelect: (loc: any) => void, suggestionsRef: React.RefObject<HTMLDivElement> }) => (
+  <div ref={suggestionsRef} className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200">
+    <div className="max-h-60 overflow-y-auto custom-scrollbar p-2">
+      {suggestions.map((loc, i) => {
+        const pCode = loc.postalCode || '';
+        const cName = loc.cityName || loc.city || '';
+        const sName = loc.cityDistrict || loc.countyName || '';
+
+        const displayTextParts = [];
+        if (pCode) displayTextParts.push(pCode);
+        if (cName) displayTextParts.push(cName);
+        if (sName && sName.toLowerCase() !== cName.toLowerCase()) {
+          displayTextParts.push(`- ${sName}`);
+        }
+
+        const displayText = displayTextParts.join(' ');
+
+        return (
+          <div
+            key={i}
+            onMouseDown={(e) => { e.preventDefault(); onSelect(loc); }}
+            className="p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer transition-all border-b border-gray-50 dark:border-gray-800 last:border-0"
+          >
+            <p className="font-bold text-sm text-gray-900 dark:text-white">{displayText}</p>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+);
+
 // --- Sub Components ---
 const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyCountry = false, showError = false, requiredEmail = true }: { title: string, data: any, onChange: (d: any) => void, countries: any[], bgClass?: string, readOnlyCountry?: boolean, showError?: boolean, requiredEmail?: boolean }) => {
   const { t } = useLanguage();
@@ -372,47 +403,29 @@ const AddressCard = ({ title, data, onChange, countries, bgClass = '', readOnlyC
             <Input label={t('address3' as any)} value={data.address3} onChange={(v: any) => onChange({ ...data, address3: v })} ruleKey="address3" showError={showError} />
           </div>
 
-          <div className="relative">
-            <div className={`grid grid-cols-1 ${(showPostal || showSuburb) ? 'md:grid-cols-2' : ''} gap-4`}>
-              {showPostal && (
+          <div className={`grid grid-cols-1 ${(showPostal || showSuburb) ? 'md:grid-cols-2' : ''} gap-4`}>
+            {showPostal && (
+              <div className="relative">
                 <Input label={t('postalCode' as any)} value={data.postalCode} onChange={(v: any) => { onChange({ ...data, postalCode: v }); fetchSuggestions(v, 'postalCode', data.country); }} onBlur={validateAddress} required ruleKey="postalcode" showError={showError} />
-              )}
-              {showSuburb && (
-                <Input label={t('suburb' as any)} value={data.suburb} onChange={(v: any) => { onChange({ ...data, suburb: v }); fetchSuggestions(v, 'suburb', data.country); }} onBlur={validateAddress} required ruleKey="suburb" showError={showError} />
-              )}
-              <Input label={t('city' as any)} value={data.city} onChange={(v: any) => { onChange({ ...data, city: v }); fetchSuggestions(v, 'city', data.country); }} onBlur={validateAddress} required ruleKey="city" showError={showError} />
-            </div>
-
-            {showSuggestions && suggestions.length > 0 && (
-              <div ref={suggestionsRef} className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200">
-                <div className="max-h-60 overflow-y-auto custom-scrollbar p-2">
-                  {suggestions.map((loc, i) => {
-                    const pCode = loc.postalCode || '';
-                    const cName = loc.cityName || loc.city || '';
-                    const sName = loc.cityDistrict || loc.countyName || '';
-
-                    const displayTextParts = [];
-                    if (pCode) displayTextParts.push(pCode);
-                    if (cName) displayTextParts.push(cName);
-                    if (sName && sName.toLowerCase() !== cName.toLowerCase()) {
-                      displayTextParts.push(`- ${sName}`);
-                    }
-
-                    const displayText = displayTextParts.join(' ');
-
-                    return (
-                      <div
-                        key={i}
-                        onClick={() => handleSuggestionSelect(loc)}
-                        className="p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer transition-all border-b border-gray-50 dark:border-gray-800 last:border-0"
-                      >
-                        <p className="font-bold text-sm text-gray-900 dark:text-white">{displayText}</p>
-                      </div>
-                    );
-                  })}
-                </div>
+                {showSuggestions && suggestions.length > 0 && suggestions[0].postalCode && (
+                  <SuggestionsDropdown suggestions={suggestions} onSelect={handleSuggestionSelect} suggestionsRef={suggestionsRef} />
+                )}
               </div>
             )}
+            {showSuburb && (
+              <div className="relative">
+                <Input label={t('suburb' as any)} value={data.suburb} onChange={(v: any) => { onChange({ ...data, suburb: v }); fetchSuggestions(v, 'suburb', data.country); }} onBlur={validateAddress} required ruleKey="suburb" showError={showError} />
+                {showSuggestions && suggestions.length > 0 && suggestions[0].cityDistrict && (
+                  <SuggestionsDropdown suggestions={suggestions} onSelect={handleSuggestionSelect} suggestionsRef={suggestionsRef} />
+                )}
+              </div>
+            )}
+            <div className="relative">
+              <Input label={t('city' as any)} value={data.city} onChange={(v: any) => { onChange({ ...data, city: v }); fetchSuggestions(v, 'city', data.country); }} onBlur={validateAddress} required ruleKey="city" showError={showError} />
+              {showSuggestions && suggestions.length > 0 && (suggestions[0].cityName || suggestions[0].city) && !suggestions[0].postalCode && (
+                <SuggestionsDropdown suggestions={suggestions} onSelect={handleSuggestionSelect} suggestionsRef={suggestionsRef} />
+              )}
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -1994,46 +2007,25 @@ export const ShipPage: React.FC<ShipPageProps> = ({ onFinish, onBack }) => {
                         <Input label="Address 2" value={tempPickupAddress.address2} onChange={v => setTempPickupAddress({ ...tempPickupAddress, address2: v })} />
                         <Input label="Address 3" value={tempPickupAddress.address3} onChange={v => setTempPickupAddress({ ...tempPickupAddress, address3: v })} />
                         <div className="sm:col-span-2 relative">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" ref={pickupSuggestionsRef}>
-                            <Input label="City" value={tempPickupAddress.city} onChange={v => { setTempPickupAddress({ ...tempPickupAddress, city: v }); fetchPickupSuggestions(v, 'city', tempPickupAddress.country); }} onBlur={validatePickupAddress} required ruleKey="city" />
-                            <Input label="Postal Code" value={tempPickupAddress.postalCode} onChange={v => { setTempPickupAddress({ ...tempPickupAddress, postalCode: v }); fetchPickupSuggestions(v, 'postalCode', tempPickupAddress.country); }} onBlur={validatePickupAddress} required ruleKey="postalcode" />
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="relative">
+                              <Input label="City" value={tempPickupAddress.city} onChange={v => { setTempPickupAddress({ ...tempPickupAddress, city: v }); fetchPickupSuggestions(v, 'city', tempPickupAddress.country); }} onBlur={validatePickupAddress} required ruleKey="city" />
+                              {showPickupSuggestions && pickupSuggestions.length > 0 && (pickupSuggestions[0].cityName || pickupSuggestions[0].city) && !pickupSuggestions[0].postalCode && (
+                                <SuggestionsDropdown suggestions={pickupSuggestions} onSelect={handlePickupSuggestionSelect} suggestionsRef={pickupSuggestionsRef} />
+                              )}
+                            </div>
+                            <div className="relative">
+                              <Input label="Postal Code" value={tempPickupAddress.postalCode} onChange={v => { setTempPickupAddress({ ...tempPickupAddress, postalCode: v }); fetchPickupSuggestions(v, 'postalCode', tempPickupAddress.country); }} onBlur={validatePickupAddress} required ruleKey="postalcode" />
+                              {showPickupSuggestions && pickupSuggestions.length > 0 && pickupSuggestions[0].postalCode && (
+                                <SuggestionsDropdown suggestions={pickupSuggestions} onSelect={handlePickupSuggestionSelect} suggestionsRef={pickupSuggestionsRef} />
+                              )}
+                            </div>
                           </div>
 
                           {pickupValidationWarning && (
                             <div className="mt-4 bg-yellow-50 dark:bg-yellow-900/30 border-2 border-dhl-yellow rounded-xl p-4 flex items-start gap-3 animate-in fade-in">
                               <AlertCircle className="w-5 h-5 text-dhl-yellow flex-shrink-0 mt-0.5" />
                               <p className="text-sm font-bold text-yellow-800 dark:text-yellow-200">{pickupValidationWarning}</p>
-                            </div>
-                          )}
-
-                          {showPickupSuggestions && pickupSuggestions.length > 0 && (
-                            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border-2 border-gray-100 dark:border-gray-700 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in duration-200">
-                              <div className="max-h-60 overflow-y-auto custom-scrollbar p-2">
-                                {pickupSuggestions.map((loc, i) => {
-                                  const pCode = loc.postalCode || '';
-                                  const cName = loc.cityName || loc.city || '';
-                                  const sName = loc.cityDistrict || loc.countyName || '';
-
-                                  const displayTextParts = [];
-                                  if (pCode) displayTextParts.push(pCode);
-                                  if (cName) displayTextParts.push(cName);
-                                  if (sName && sName.toLowerCase() !== cName.toLowerCase()) {
-                                    displayTextParts.push(`- ${sName}`);
-                                  }
-
-                                  const displayText = displayTextParts.join(' ');
-
-                                  return (
-                                    <div
-                                      key={i}
-                                      onClick={() => handlePickupSuggestionSelect(loc)}
-                                      className="p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer transition-all border-b border-gray-50 dark:border-gray-800 last:border-0"
-                                    >
-                                      <p className="font-bold text-sm text-gray-900 dark:text-white">{displayText}</p>
-                                    </div>
-                                  );
-                                })}
-                              </div>
                             </div>
                           )}
                         </div>
